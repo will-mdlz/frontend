@@ -1,12 +1,14 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import dataManagerInstance from '../../DataManagement/Data';
 
 
 const ReturnAVP = ({maxHeight, prices}) => {
-  
+  const [input, setInput] = useState(dataManagerInstance.input["AVP"])
 
-  const input = dataManagerInstance.input["AVP"];
+  useEffect(() => {
+    dataManagerInstance.calcAVP(prices);
+  }, [prices])
 
 
 

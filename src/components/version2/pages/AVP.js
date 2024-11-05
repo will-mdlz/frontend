@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Grid } from '@mui/material';
 //import InputPage1 from './page1components/InputPage1';
 import ReturnsAVP from './page1components/ReturnAVP';
@@ -7,12 +7,13 @@ import dataManagerInstance from '../DataManagement/Data';
 
 const AVP = () => {
   //const [dataChanged, setDataChanged] = React.useState(false); // State to trigger rerender
+  const [prices, setPrices] = useState([210, 220, 230, 240, 250, 260])
 
-  React.useEffect(() => {
+  useEffect(() => {
     dataManagerInstance.calcSynergizedForecast();
     //dataManagerInstance.calcConsolidatedSegment();
-    //dataManagerInstance.calcAVP();
-  }, [])
+    dataManagerInstance.calcAVP(prices);
+  }, [prices])
 
   // const handleDataChange = () => {
   //   const keys = Object.keys(dataManagerInstance.rawdata.SEG);
@@ -23,7 +24,7 @@ const AVP = () => {
   //   setDataChanged(prev => !prev); // Toggle state to trigger rerender
   // };
 
-  const prices = [210, 220, 230, 240, 250, 260]
+  //const prices = [210, 220, 230, 240, 250, 260]
 
   const maxHeight = 680;
 
