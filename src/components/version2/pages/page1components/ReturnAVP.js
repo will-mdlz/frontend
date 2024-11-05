@@ -8,6 +8,9 @@ const ReturnAVP = ({maxHeight, prices}) => {
 
   useEffect(() => {
     dataManagerInstance.calcAVP(prices);
+    const data = dataManagerInstance.input["AVP"];
+    setInput(data)
+    console.log('hello')
   }, [prices])
 
 
