@@ -7,16 +7,18 @@ const ReturnAVP = ({maxHeight, prices}) => {
   const [input, setInput] = useState(dataManagerInstance.input["AVP"])
 
   useEffect(() => {
+    dataManagerInstance.updateAll();
+    dataManagerInstance.storeIRRs(prices);
     dataManagerInstance.calcAVP(prices);
     const data = dataManagerInstance.input["AVP"];
     setInput(data)
-    console.log('hello')
+    console.log('hi')
   }, [prices])
 
-
-  dataManagerInstance.storeIRRs(prices);
   dataManagerInstance.updateAll();
+  dataManagerInstance.storeIRRs(prices);
   dataManagerInstance.calcAVP([210, 220, 230, 240, 250, 260]);
+  // console.log('hello')
   const borderColor = '#4F2170';
   const fadedColor = 'gainsboro'
 
