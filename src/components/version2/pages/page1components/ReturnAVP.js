@@ -14,7 +14,6 @@ const ReturnAVP = ({maxHeight, prices}) => {
   }, [prices])
 
 
-
   dataManagerInstance.storeIRRs(prices);
   dataManagerInstance.updateAll();
   dataManagerInstance.calcAVP([210, 220, 230, 240, 250, 260]);
