@@ -1,0 +1,21 @@
+
+h1 {
+  text-align: center;
+}
+
+.highlighted-cell {
+  background-color: yellow; /* You can choose any color */
+}
+
+.dollar-cell {
+  display: flex;
+  justify-content: space-between; /* Ensure dollar is on the left, value is on the right */
+  align-items: center;
+  padding-right: 10px; /* Optional: adds some spacing between the value and the cell border */
+  font-weight: bold;
+}
+
+.centered-image {
+  display: block; /* Make the image a block element */
+  margin: 0 auto; /* Center horizontally */
+}
