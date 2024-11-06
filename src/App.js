@@ -7,7 +7,7 @@ function App() {
 
   // Sample password check function
   const handlePasswordSubmit = (password) => {
-    const correctPassword = "hello";  // Replace with actual password handling
+    const correctPassword = "willthebest";  // Replace with actual password handling
     if (password === correctPassword) {
       setIsAuthenticated(true);
     } else {
