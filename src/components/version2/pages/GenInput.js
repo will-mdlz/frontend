@@ -69,7 +69,7 @@ if (input < 1000 && input > -1000) {
     setVal(event.target.value)
   }
 
-  const handleBlur = (table, key) => (event) => {
+  const handleBlur = (table, key, isPercent) => (event) => {
     const currVal = event.target.value;
     if(table===0) {
       if(currVal==="") {
@@ -78,19 +78,19 @@ if (input < 1000 && input > -1000) {
           setCostData(updatedData);
           dataManagerInstance.input["COST"]["Runrate"] = originalValue;
         } else {
-          const updatedData = {...costData, [key]: originalValue};
+          const updatedData = {...costData, [key]: parseFloat(currVal) || originalValue};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Phasing"][key] = originalValue;
+          dataManagerInstance.input["COST"]["Phasing"][key] = parseFloat(currVal) || originalValue;
         }
       } else {
         if(key < 0) {
-          const updatedData = {...costData, Runrate: currVal};
+          const updatedData = {...costData, Runrate: parseFloat(currVal) || originalValue};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Runrate"] = currVal;
+          dataManagerInstance.input["COST"]["Runrate"] = parseFloat(currVal) || originalValue;
         } else {
-          const updatedData = {...costData, [key]: currVal/100};
+          const updatedData = {...costData, [key]: parseFloat(currVal)/100 || originalValue};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Phasing"][key] = currVal/100;
+          dataManagerInstance.input["COST"]["Phasing"][key] = parseFloat(currVal)/100 || originalValue;
         }
         setVal('');
       }
@@ -101,9 +101,9 @@ if (input < 1000 && input > -1000) {
         setGenData(updatedData);
         dataManagerInstance.input["GEN"][key] = originalValue;
       } else {
-        const updatedData = { ...genData, [key]: currVal };
+        const updatedData = { ...genData, [key]: (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue };
         setGenData(updatedData);
-        dataManagerInstance.input["GEN"][key] = currVal;
+        dataManagerInstance.input["GEN"][key] = (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue;
         setVal('');
       }
     }
@@ -194,7 +194,7 @@ if (input < 1000 && input > -1000) {
                   value={isEditing(0, -1) ? val : prettify_dollars(costData["Runrate"])}
                   onFocus={handleFocus(0, -1, "dollar")}
                   onChange={handleInputChange()}
-                  onBlur={handleBlur(0, -1)}
+                  onBlur={handleBlur(0, -1, false)}
                   variant="outlined"
                   size="small"
                   label={"Runrate"}
@@ -205,7 +205,7 @@ if (input < 1000 && input > -1000) {
                   value={isEditing(0, index) ? val : prettify_percent(item)}
                   onFocus={handleFocus(0, index, "percent")}
                   onChange={handleInputChange()}
-                  onBlur={handleBlur(0, index)}
+                  onBlur={handleBlur(0, index, true)}
                   key={index}
                   variant="outlined"
                   size="small"
@@ -260,7 +260,7 @@ if (input < 1000 && input > -1000) {
                 value={displayValue}
                 onFocus={handleFocus(table, key, isPercent ? "percent" : isDollar ? "dollar" : 0)}
                 onChange={handleInputChange()}
-                onBlur={handleBlur(table, key)}
+                onBlur={handleBlur(table, key, isPercent)}
                 variant="outlined"
                 size="small"
               />

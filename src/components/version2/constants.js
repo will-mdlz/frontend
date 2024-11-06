@@ -66,5 +66,5 @@ export const mdlz_labels = [
 ]
 
 export const target_labels = [
-  "Target Pensions - (tax deductible)", "Target Other Income / (Expense) - (tax deductible)", "Target NOPAT"
+  "Target Pensions - (tax deductible)", "Target Other Income / (Expense) - (tax deductible)"
 ]

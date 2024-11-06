@@ -37,9 +37,9 @@ const RevTemplate = ({segKey, handleDataChanged}) => {
 
   const prettify_dollars = (input) => {
     if (input < 1000 && input > -1000) {
-      return input > 0 ? "$" + input.toFixed(1) : "$(" + (input*-1).toFixed(1) + ")";
+      return input > 0 ? "$" + (input*1).toFixed(1) : "$(" + (input*-1).toFixed(1) + ")";
     } else {
-      let tempStr = input > 0 ? input.toFixed(0) : (input*-1).toFixed(0);
+      let tempStr = input > 0 ? (input*1).toFixed(0) : (input*-1).toFixed(0);
       if (input < 1000 && input > -1000) { return tempStr }
       let newStr = "";
       let count = 0;
@@ -81,7 +81,7 @@ const RevTemplate = ({segKey, handleDataChanged}) => {
     if(currVal==="") {
       data[row][col] = originalValue;
     } else {
-      data[row][col] = currVal;
+      data[row][col] = parseFloat(currVal) || originalValue;
       // Update things
       dataManagerInstance.calcRev(segKey)
       setVal('');

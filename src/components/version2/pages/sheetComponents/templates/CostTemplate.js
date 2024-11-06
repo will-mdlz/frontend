@@ -81,7 +81,7 @@ const CostTemplate = ({segKey, handleDataChanged}) => {
     if(currVal==="") {
       data[row][col] = originalValue;
     } else {
-      data[row][col] = currVal;
+      data[row][col] = parseFloat(currVal) || originalValue;
       // Update things
       dataManagerInstance.calcCost(segKey)
       setVal('');
