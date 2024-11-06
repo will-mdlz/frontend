@@ -899,6 +899,11 @@ class DataManager {
 
     /// ALL EPS STUFF
 
+    getTargetNOPAT = (year) => {
+        return this.rawdata["SEG"]["CONS"][22][year] + this.rawdata["COST"]["CONS"][7][year] +
+            this.rawdata["REV"]["CONS"][12][year] + this.rawdata["DIS"]["CONS"][7][year] - this.rawdata["NCORE"]["CONS"][15][year]
+    };
+
     calcAmort = (price) => {
         const trans_years = this.input["GEN"]["Transaction Years"];
         const amort_perc = this.input["GEN"]["Amortization %"];
@@ -963,7 +968,7 @@ class DataManager {
         +nc_nwc+rev_nwc+otc+oll+taxes+tax_impact+mdlz_jvs+mdlz_jvs_impact+mdlz_other+mdlz_other_impact+restruct+sbc+pension+amort;
     }
 
-    epsStuff = (prices, year) => {
+    epsStuff = (prices, year, tnopat=NONE) => {
         let l1 = [];
         let l2 = [];
 
@@ -976,7 +981,8 @@ class DataManager {
         const mdlz_stat_quo_eps = this.rawdata["MDLZ"][0][currYear]
 
         const mdlz_nopat = this.rawdata["MDLZ"][5][currYear];
-        const target_nopat = this.rawdata["TARGET"][2][currYear];
+        //const target_nopat = this.rawdata["TARGET"][2][currYear];
+        const target_nopat = tnopat ? tnopat : this.getTargetNOPAT(currYear+1)
 
         const pensions = this.rawdata["MDLZ"][13][currYear];
         const mdlz_pensions_shield = mdlz_tax * pensions * -1;
@@ -1075,9 +1081,47 @@ class DataManager {
         return npvs;
     }
 
-    //Gross Margin and COGS sensitivity
-    grossMarginCOGS = (netRevenues) => {
+    getTNOPAT = (nopat, year) => {
+        return nopat + this.rawdata["COST"]["CONS"][7][year] +
+            this.rawdata["REV"]["CONS"][12][year] + this.rawdata["DIS"]["CONS"][7][year] - this.rawdata["NCORE"]["CONS"][15][year]
+    }
 
+    //Gross Margin and COGS sensitivity
+    growthEPSSensitivity = (growthRates, price, years) => {
+        let eps = [];
+        // years.forEach((year, index) => {
+        //     const realYear = year-this.startYear-1;
+        //     console.log(realYear)
+        //     let curr = [];
+        //     growthRates.forEach((rate) => {
+        //         const data = this.rawdata["SEG"]["CONS"].map(row => [...row]);
+        //         for(let year = 1; year < data[0].length; year++) {
+        //             data[0][year] = data[0][year-1] * (1+rate);
+        //         }
+        //     })
+        //     eps.push(curr)
+        // })
+
+        years.forEach(() => {
+            eps.push([[], []])
+        })
+
+        growthRates.forEach((rate) => {
+            const data = this.rawdata["SEG"]["CONS"].map(row => [...row]);
+            for(let year = 1; year < data[0].length; year++) {
+                data[0][year] = data[0][year-1] * (1+rate);
+            }
+            years.forEach((year, index) => {
+                const realYear = year-this.startYear;
+                const nopat = data[0][realYear] * data[13][realYear] * (1-data[21][realYear]);
+                const tnopat = this.getTNOPAT(nopat, realYear);
+                const group = this.epsStuff([price], year, tnopat)
+                eps[index][0].push(group[0])
+                eps[index][1].push(group[1])
+            })
+        })
+
+        return eps;
     }
 
     /// INPUT CALCS

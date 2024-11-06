@@ -6,10 +6,14 @@ import PnLSheets from './pages/PnLSheets';
 import MDLZPnL from './pages/MDLZPnL';
 import Sensitivities from './pages/Sensitivities';
 import GenInput from './pages/GenInput';
+import dataManagerInstance from './DataManagement/Data';
 
 const PageManager = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentPage, setCurrentPage] = useState('Page1');  // Default to Page1
+
+  dataManagerInstance.initialCalc();
+  dataManagerInstance.calcConsolidatedSegment();
 
   const pages = {
     Page1: <AVP />,

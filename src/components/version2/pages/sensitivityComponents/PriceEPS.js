@@ -52,7 +52,7 @@ const PriceEPS = () => {
     return (
         <Box sx={{ border: `2px solid ${borderColor}`}}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
-                <p style={{ textAlign: 'center' }}>Price ($) vs ACC (%) / DIL ($)</p>
+                <p style={{ textAlign: 'center' }}>Price ($) vs ACC ($) / DIL (%)</p>
             </div>
             {/* Input fields for start price, end price, and interval */}
             <TextField

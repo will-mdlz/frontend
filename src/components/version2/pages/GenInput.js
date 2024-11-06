@@ -88,9 +88,9 @@ if (input < 1000 && input > -1000) {
           setCostData(updatedData);
           dataManagerInstance.input["COST"]["Runrate"] = currVal;
         } else {
-          const updatedData = {...costData, [key]: currVal};
+          const updatedData = {...costData, [key]: currVal/100};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Phasing"][key] = currVal;
+          dataManagerInstance.input["COST"]["Phasing"][key] = currVal/100;
         }
         setVal('');
       }

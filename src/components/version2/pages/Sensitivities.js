@@ -5,6 +5,7 @@ import GrowthIRR from './sensitivityComponents/GrowthIRR';
 import GrowthNPV from './sensitivityComponents/GrowthNPV';
 import PriceEPS from './sensitivityComponents/PriceEPS';
 import PriceGrowthIRR from './sensitivityComponents/PriceGrowthIRR';
+import GrowthEPS from './sensitivityComponents/GrowthEPS';
 
 const Sensitivities = () => {
 
@@ -33,7 +34,9 @@ const Sensitivities = () => {
         <Grid item xs={6} >
           <PriceGrowthIRR />
         </Grid>
-        
+        <Grid item xs={6} >
+          <GrowthEPS />
+        </Grid>
       </Grid>
     </div>
   );

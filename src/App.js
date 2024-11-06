@@ -1,14 +1,27 @@
-import React from 'react';
-//import TabManager from './components/TabManager';
+import React, { useState } from 'react';
 import PageManager from './components/version2/PageManager';
-import dataManagerInstance from './components/version2/DataManagement/Data';
-
+import SecurityPage
+ from './components/version2/SecurityPage';
 function App() {
-  dataManagerInstance.initialCalc();
-  dataManagerInstance.calcConsolidatedSegment();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Sample password check function
+  const handlePasswordSubmit = (password) => {
+    const correctPassword = "hello";  // Replace with actual password handling
+    if (password === correctPassword) {
+      setIsAuthenticated(true);
+    } else {
+      alert("Incorrect password");
+    }
+  };
+
   return (
     <div className="App">
-      <PageManager />
+      {isAuthenticated ? (
+        <PageManager />
+      ) : (
+        <SecurityPage onSubmit={handlePasswordSubmit} />
+      )}
     </div>
   );
 }

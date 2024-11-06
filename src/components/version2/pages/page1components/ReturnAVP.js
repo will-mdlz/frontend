@@ -12,13 +12,11 @@ const ReturnAVP = ({maxHeight, prices}) => {
     dataManagerInstance.calcAVP(prices);
     const data = dataManagerInstance.input["AVP"];
     setInput(data)
-    console.log('hi')
   }, [prices])
 
   dataManagerInstance.updateAll();
   dataManagerInstance.storeIRRs(prices);
   dataManagerInstance.calcAVP([210, 220, 230, 240, 250, 260]);
-  // console.log('hello')
   const borderColor = '#4F2170';
   const fadedColor = 'gainsboro'
 
