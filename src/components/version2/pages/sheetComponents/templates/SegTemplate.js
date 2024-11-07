@@ -81,7 +81,7 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
     if(currVal==="") {
       data[row][col] = originalValue;
     } else {
-      data[row][col] = parseFloat(currVal) || originalValue;
+      data[row][col] = currVal==="0" ? 0 : parseFloat(currVal) || originalValue;
       // Update things
       dataManagerInstance.calcSegment(segKey)
       setVal('');

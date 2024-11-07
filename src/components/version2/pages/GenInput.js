@@ -84,13 +84,13 @@ if (input < 1000 && input > -1000) {
         }
       } else {
         if(key < 0) {
-          const updatedData = {...costData, Runrate: parseFloat(currVal) || originalValue};
+          const updatedData = {...costData, Runrate: currVal==="0" ? 0 : parseFloat(currVal) || originalValue};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Runrate"] = parseFloat(currVal) || originalValue;
+          dataManagerInstance.input["COST"]["Runrate"] = currVal==="0" ? 0 : parseFloat(currVal) || originalValue;
         } else {
-          const updatedData = {...costData, [key]: parseFloat(currVal)/100 || originalValue};
+          const updatedData = {...costData, [key]: currVal==="0" ? 0 : parseFloat(currVal)/100 || originalValue};
           setCostData(updatedData);
-          dataManagerInstance.input["COST"]["Phasing"][key] = parseFloat(currVal)/100 || originalValue;
+          dataManagerInstance.input["COST"]["Phasing"][key] = currVal==="0" ? 0 : parseFloat(currVal)/100 || originalValue;
         }
         setVal('');
       }
@@ -101,9 +101,9 @@ if (input < 1000 && input > -1000) {
         setGenData(updatedData);
         dataManagerInstance.input["GEN"][key] = originalValue;
       } else {
-        const updatedData = { ...genData, [key]: (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue };
+        const updatedData = { ...genData, [key]: currVal==="0" ? 0 : (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue };
         setGenData(updatedData);
-        dataManagerInstance.input["GEN"][key] = (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue;
+        dataManagerInstance.input["GEN"][key] = currVal==="0" ? 0 : (isPercent ? parseFloat(currVal)/100 : parseFloat(currVal)) || originalValue;
         setVal('');
       }
     }

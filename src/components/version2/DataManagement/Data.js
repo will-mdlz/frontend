@@ -441,11 +441,11 @@ class DataManager {
         const data = this.rawdata["SEG"][key];
         if(data) {
             for(let year = 0; year < data[0].length; year++) {
-                data[1][year] = year===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
+                data[1][year] = year===0 ? 0 : data[0][year-1]===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
                 data[8][year] = data[2][year] - data[4][year] - data[6][year];
                 data[12][year] = data[8][year] + parseFloat(data[10][year]);
                 [3,5,7,9,11,13].forEach((num) => {
-                    data[num][year] = data[num-1][year]/data[0][year];
+                    data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
                 });
             }
             //this.updateSAInput(key);
