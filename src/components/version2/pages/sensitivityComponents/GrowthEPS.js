@@ -53,7 +53,7 @@ const GrowthEPS = () => {
     return (
         <Box sx={{ border: `2px solid ${borderColor}`}}>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
-                <p style={{ textAlign: 'center' }}>Standalone Revenue Growth (%) vs ACC ($) / DIL (%) by year </p>
+                <p style={{ textAlign: 'center' }}>Standalone Revenue Growth (%) vs ACC/DIL ($ %) by year </p>
             </div>
             {/* Input fields for start price, end price, and interval */}
             <TextField
@@ -112,7 +112,7 @@ const GrowthEPS = () => {
                                 {year}
                                 </TableCell>
                                 <TableCell component="th" scope="row">
-                                ACC
+                                $
                                 </TableCell>
                                 {growths.map((price, index) => (
                                 <TableCell key={`acc-${yearIndex}-${index}`} align="center" fullwidth>
@@ -124,7 +124,7 @@ const GrowthEPS = () => {
                             </TableRow>
                             <TableRow hover>
                                 <TableCell component="th" scope="row">
-                                DIL
+                                %
                                 </TableCell>
                                 {growths.map((price, index) => (
                                 <TableCell key={`dil-${yearIndex}-${index}`} align="center">
