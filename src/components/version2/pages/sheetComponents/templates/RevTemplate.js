@@ -32,8 +32,8 @@ const RevTemplate = ({segKey, handleDataChanged}) => {
     return labels;
   };
 
-  const total_years = dataManagerInstance.numYears;
-  const COLUMN_LABELS = generateColumnLabels(2025, total_years);
+  const total_years = dataManagerInstance.rawdata["REV"][segKey][0].length;
+  const COLUMN_LABELS = generateColumnLabels(dataManagerInstance.input["REV"][segKey]['startingyear'], total_years);
 
   const prettify_dollars = (input) => {
     if (input < 1000 && input > -1000) {

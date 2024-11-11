@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper} from '@mui/material';
+import { TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper} from '@mui/material';
 import dataManagerInstance from '../../../DataManagement/Data';
 import { seg_cons_labels as ROW_LABELS } from '../../../constants';
 
 const SegCons = ({dataChanged}) => {
     const [data, setData] = useState([]);
     const hasCombinedData = useRef(false);
+    const [originalValue, setOriginalValue] = useState('');
+    const [val, setVal] = useState('')
+    const [editmode, setEditMode] = useState([])
 
     useEffect(() => {
       // Fetch the combined data only once when the component mounts
@@ -25,6 +28,7 @@ const SegCons = ({dataChanged}) => {
     const fadedColor = 'gainsboro'
   let perc_rows = [1,3,5,7,9,11,13,15,17,19,21,25,27]
   let dollar_rows = [0,2,4,6,8,10,12,14,16,18,22,24,28]
+  let editable = [11,17]
 
   const generateColumnLabels = (startingYear, numberOfYears) => {
     const labels = [];
@@ -61,6 +65,40 @@ const SegCons = ({dataChanged}) => {
     return input > 0 ? `${(input*100).toFixed(1)}%` : `(${(input*100*-1).toFixed(1)})%`;
   };
 
+  const isEditing = (segment, yearIndex) => {
+    return segment===editmode[0] && yearIndex===editmode[1];
+  }
+
+  const convertValToPerc = (value) => {
+    return parseFloat(value.replace('%', '')) / 100 || 0;
+  }
+
+  const handleFocus = (row, col) => (event) => {
+    setOriginalValue(convertValToPerc(event.target.value))
+    setEditMode([row, col]);
+  }
+
+  const handleInputChange = (row, col) => (event) => {
+    setVal(event.target.value)
+  }
+
+  const handleBlur = (row, col) => (event) => {
+    const currVal = event.target.value;
+    if(currVal==="") {
+      data[row][col] = originalValue;
+    } else {
+      data[row][col] = currVal==="0" ? 0 : parseFloat(currVal)/100 || originalValue;
+      if(row===11) dataManagerInstance.rawdata["Corp Exp"][col] = parseFloat(currVal)/100 || originalValue;
+      if(row===17) dataManagerInstance.rawdata["Corp Dep"][col] = parseFloat(currVal)/100 || originalValue;
+      dataManagerInstance.calcConsolidatedSegment();
+      const combinedData = dataManagerInstance.getSegment("CONS");
+      setData(combinedData);
+      // Update things
+      setVal('');
+    }
+    setEditMode([])
+  }
+
   const headerStyle = {
     borderBottom: '2px solid black',
     borderRight: '2px solid black',
@@ -92,6 +130,12 @@ const SegCons = ({dataChanged}) => {
   const dollarStyle = {
     fontWeight: "bold",
     backgroundColor: fadedColor
+  }
+
+  const labelStyle = {
+    fontSize: 12,
+    padding: 0,
+    backgroundColor: 'yellow'
   }
 
   return <div>
@@ -128,9 +172,36 @@ const SegCons = ({dataChanged}) => {
               >
                 {ROW_LABELS[rowIndex]} 
               </TableCell>
+
               {row.map((cellValue, cellIndex) => {
                 if (cellIndex >= total_years) return null;
-                return (
+                return editable.includes(rowIndex) ? (
+                  <TableCell style={labelStyle} key={cellIndex}>
+                      <TextField
+                            value={isEditing(rowIndex, cellIndex) ? val : prettify_percent(cellValue) + " "}
+                            onFocus={handleFocus(rowIndex, cellIndex)}
+                            onChange={handleInputChange(rowIndex, cellIndex)}
+                            onBlur={handleBlur(rowIndex, cellIndex)}
+                            variant='standard'
+                            size='small'
+                            fullWidth
+                            InputProps={{
+                              disableUnderline: true, // Removes underline on the standard variant
+                              style: {fontSize: 13, textAlign: 'center', fontStyle: 'italic', color: 'blue'}
+                            }}
+                            inputProps={{
+                              style: { textAlign: 'right', padding: 1 }, // Centers the text inside the TextField
+                            }}
+                            sx={{
+                                padding: 0,       // Removes padding around text
+                                fontSize: 'inherit', // Matches surrounding text size
+                                color: 'inherit',    // Matches surrounding text color
+                                
+                            }}
+                          />
+                      </TableCell>
+                ) 
+                : (
                 <TableCell
                   key={cellIndex}
                   align="right"

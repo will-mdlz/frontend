@@ -152,7 +152,7 @@ if (input < 1000 && input > -1000) {
               </Button>
             </Box>
 
-            <input type="file" id="file-input" accept=".json" style={{ display: 'none' }} onChange={handleFileUpload} />
+            <input type="file" id="file-input" accept=".json, .xlsx, .xls" style={{ display: 'none' }} onChange={handleFileUpload} />
 
             {fileName && (
               <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontStyle: 'italic' }}>

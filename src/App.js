@@ -15,13 +15,21 @@ function App() {
     }
   };
 
-  return (
-    <div className="App">
+  const pageWithPassword = () => {
+    return (
+      <div className="App">
       {isAuthenticated ? (
         <PageManager />
       ) : (
         <SecurityPage onSubmit={handlePasswordSubmit} />
       )}
+    </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <PageManager />
     </div>
   );
 }

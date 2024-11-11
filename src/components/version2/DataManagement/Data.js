@@ -1,4 +1,4 @@
-import { NONE } from "browserify-zlib/lib/binding";
+import * as XLSX from 'xlsx';
 import * as constants from "../constants";
 import { seg1, seg2, seg3, cost1, cost2, rev1, rev2, rev3, rev4, rev5, rev6, rev7, rev8, rev9, dis1, dis2, ncore1, ncore2, corpDep, corpExp, mdlz, target } from "../rawdata/rawdata";
 
@@ -12,8 +12,8 @@ class DataManager {
         this.numRevs = 0;
         this.numDis = 0;
         this.numCore = 0;
-        this.startYear = 2025;
-        this.tradeYear = 2025;
+        // this.startYear = 2025;
+        // this.tradeYear = 2025;
         this.numYears = 11;
 
         this.initializeData();
@@ -48,6 +48,8 @@ class DataManager {
         this.input["SA"] = {};
         this.input["COST"] = {"Runrate": 57, "Phasing": [.333,.666, 1]};
         this.input["REV"] = {"Single Syn": 0, "OI Margin Impact": 0, "Runrate Phasing": [0,.25,.50,.75,0], "OI Phasing": [0,0,0,0,0,0]};
+        this.input["DIS"] = {};
+        this.input["NCORE"] = {};
         this.input["GEN"] = this.initGen();
         this.input["CALC"] = this.initCalc();
         this.input["AVP"] = this.initAVP();
@@ -64,17 +66,29 @@ class DataManager {
         this.rawdata["MAP"] = {"REV": {}}
         this.rawdata["MDLZ"] = mdlz;
         this.rawdata["TARGET"] = target;
+        this.rawdata["Corp Exp"] = corpExp;
+        this.rawdata["Corp Dep"] = corpDep;
 
-        this.extrarawdata["Standalone Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
-        this.extrarawdata["Synergized Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
-        this.extrarawdata["SEG"] = {"CONS": this.createEmptyArray(constants.seg_cons_labels.length, this.numYears)};
-        this.extrarawdata["REV"] = {"CONS": this.createEmptyArray(constants.rev_cons_labels.length, this.numYears)};
-        this.extrarawdata["COST"] = {"CONS": this.createEmptyArray(constants.cost_cons_labels.length, this.numYears)};
-        this.extrarawdata["DIS"] = {"CONS": this.createEmptyArray(constants.dis_cons_labels.length, this.numYears)};
-        this.extrarawdata["NCORE"] = {"CONS": this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears)};
-        this.extrarawdata["MAP"] = {"REV": {}}
-        this.extrarawdata["MDLZ"] = mdlz;
-        this.extrarawdata["TARGET"] = target;
+        // this.extrarawdata["Standalone Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
+        // this.extrarawdata["Synergized Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
+        // this.extrarawdata["SEG"] = {"CONS": this.createEmptyArray(constants.seg_cons_labels.length, this.numYears)};
+        // this.extrarawdata["REV"] = {"CONS": this.createEmptyArray(constants.rev_cons_labels.length, this.numYears)};
+        // this.extrarawdata["COST"] = {"CONS": this.createEmptyArray(constants.cost_cons_labels.length, this.numYears)};
+        // this.extrarawdata["DIS"] = {"CONS": this.createEmptyArray(constants.dis_cons_labels.length, this.numYears)};
+        // this.extrarawdata["NCORE"] = {"CONS": this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears)};
+        // this.extrarawdata["MAP"] = {"REV": {}}
+        // this.extrarawdata["MDLZ"] = mdlz;
+        // this.extrarawdata["TARGET"] = target;
+    }
+
+    reset = () => {
+        this.numSegments = 0;
+        this.numCosts = 0;
+        this.numRevs = 0;
+        this.numDis = 0;
+        this.numCore = 0;
+        this.initializeData();
+        this.initializeSheetData();
     }
 
     createEmptyArray(x, y, val=0) {
@@ -83,18 +97,18 @@ class DataManager {
 
     addSegment = (val=0) => {
         this.numSegments++;
-        this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0]};
+        this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": 2025};
         this.rawdata["SEG"][this.numSegments] = this.createEmptyArray(constants.seg_labels.length, this.numYears, 0);
-        this.extrarawdata["SEG"][this.numSegments] = this.createEmptyArray(constants.seg_labels.length, this.numYears, 0);
+        //this.extrarawdata["SEG"][this.numSegments] = this.createEmptyArray(constants.seg_labels.length, this.numYears, 0);
         if(val===1) {
             this.rawdata["SEG"][this.numSegments] = seg1;
-            this.extrarawdata["SEG"][this.numSegments] = seg1;
+            //this.extrarawdata["SEG"][this.numSegments] = seg1;
         } else if(val===2) {
             this.rawdata["SEG"][this.numSegments] = seg2;
-            this.extrarawdata["SEG"][this.numSegments] = seg2;
+            //this.extrarawdata["SEG"][this.numSegments] = seg2;
         } else if(val===3) {
             this.rawdata["SEG"][this.numSegments] = seg3;
-            this.extrarawdata["SEG"][this.numSegments] = seg3;
+            //this.extrarawdata["SEG"][this.numSegments] = seg3;
         }
     };
 
@@ -104,13 +118,14 @@ class DataManager {
 
     addCostSyn = (val) => {
         this.numCosts++;
+        this.input["COST"][this.numCosts] = {"startingyear": 2025}
         this.rawdata["COST"][this.numCosts] = this.createEmptyArray(constants.cost_labels.length, this.numYears, 0);
         if(val===1) {
             this.rawdata["COST"][this.numCosts] = cost1;
-            this.extrarawdata["COST"][this.numCosts] = cost1;
+            //this.extrarawdata["COST"][this.numCosts] = cost1;
         } else if(val===2) {
             this.rawdata["COST"][this.numCosts] = cost2;
-            this.extrarawdata["COST"][this.numCosts] = cost2;
+            //this.extrarawdata["COST"][this.numCosts] = cost2;
         }
     }
 
@@ -120,6 +135,7 @@ class DataManager {
 
     addRevSyn = (val, segs) => {
         this.numRevs++;
+        this.input["REV"][this.numRevs] = {"startingyear": 2025}
         this.rawdata["REV"][this.numRevs] = this.createEmptyArray(constants.rev_labels.length, this.numYears, 0);
         if(val===1) {
             this.rawdata["REV"][this.numRevs] = rev1;
@@ -171,6 +187,7 @@ class DataManager {
 
     addDis = (val) => {
         this.numDis++;
+        this.input["DIS"][this.numDis] = {"startingyear": 2025}
         this.rawdata["DIS"][this.numDis] = this.createEmptyArray(constants.dis_labels.length, this.numYears, 0);
         if(val===1) {
             this.rawdata["DIS"][this.numDis] = dis1;
@@ -189,6 +206,7 @@ class DataManager {
 
     addNcore = (val) => {
         this.numCore++;
+        this.input["NCORE"][this.numCore] = {"startingyear": 2025}
         this.rawdata["NCORE"][this.numCore] = this.createEmptyArray(constants.ncore_labels.length, this.numYears, 0);
         if(val===1) {
             this.rawdata["NCORE"][this.numCore] = ncore1;
@@ -235,6 +253,7 @@ class DataManager {
             "Beginning Cash": 2184, "Ending Cash": 2000, "Minimum Cash Balance": -2000, "OTC": 1845,
             "FDSO at Offer": 203.361, "MDLZ Current FDSO": 1347, "MDLZ Share Price": 74.18, "Target Current Cash": 467, "Non-Core Divestiture": 322,
             "Debt Issurance Fees": .0055, "Transaction Fees %": .004, "Control Fees": 55, "KKR": 1669, "Target NWC Change": -.05, "CAPEX % of NR": .04, "Year 1 OTC": 799, "Year 2 OTC": 799,
+            "Trade Year": 2025,
         }
     }
 
@@ -320,7 +339,7 @@ class DataManager {
         if(val){
             l.push(val)
         } else { //get real EBITDA
-            l.push(this.rawdata["Synergized Forecast"][10][year-this.startYear])
+            l.push(this.rawdata["Synergized Forecast"][10][year-this.input["GEN"]["Trade Year"]])
         }
         for(let i = 0; i < prices.length; i++) {
             l.push( this.input["AVP"]["Enterprise Value"][i+1] / (l[0]/1000) );
@@ -385,8 +404,8 @@ class DataManager {
     };
 
     calcCombinedNPV = (revyear, costyear, multiple) => {
-        const revval = this.rawdata["REV"]["CONS"][5][revyear-this.startYear];
-        const revexp = this.rawdata["REV"]["CONS"][14][revyear-this.startYear];
+        const revval = this.rawdata["REV"]["CONS"][5][revyear-this.input["GEN"]["Trade Year"]];
+        const revexp = this.rawdata["REV"]["CONS"][14][revyear-this.input["GEN"]["Trade Year"]];
         const keys = Object.keys(this.rawdata["COST"])
         let costval = 0
         keys.forEach((key) => {
@@ -394,10 +413,10 @@ class DataManager {
                 costval += this.rawdata["COST"][key][5][this.numYears-1];
             }
         })
-        const costexp = this.rawdata["DIS"]["CONS"][4][costyear-this.startYear];
+        const costexp = this.rawdata["DIS"]["CONS"][4][costyear-this.input["GEN"]["Trade Year"]];
 
-        const factorrev = Math.pow(1/(1+this.input["GEN"]["WACC"]),(-.5 + revyear - this.startYear));
-        const factorcost = Math.pow(1/(1+this.input["GEN"]["WACC"]),(-.5 + costyear - this.startYear));
+        const factorrev = Math.pow(1/(1+this.input["GEN"]["WACC"]),(-.5 + revyear - this.input["GEN"]["Trade Year"]));
+        const factorcost = Math.pow(1/(1+this.input["GEN"]["WACC"]),(-.5 + costyear - this.input["GEN"]["Trade Year"]));
 
         const revsyn = (revval-revexp) * multiple * factorrev;
 
@@ -513,20 +532,34 @@ class DataManager {
         keys.forEach((segKey) => {
             if(segKey!=="CONS") {
                 const seg = dataManagerInstance.rawdata["SEG"][segKey];
+                const tradeYear = this.input["GEN"]["Trade Year"]
+                const segStartYear = dataManagerInstance.input["SA"][segKey]["startingyear"];
+                const yearDif = tradeYear-segStartYear;
+                if(yearDif>=0) {
                     for(let year = 0; year < data[0].length; year++) {
                         [0,2,4,6,8].forEach((num) => {
-                            data[num][year] += parseFloat(seg[num][year]);
+                            data[num][year] += parseFloat(seg[num][year+yearDif] || 0);
                         });
-                        data[14][year] += seg[10][year];
+                        data[14][year] += seg[10][year+yearDif] || 0;
                     }
+                } else {
+                    const offset = yearDif * -1;
+                    for(let year = 0; year < seg[0].length; year++) {
+                        if(year+offset > data[0].length) break
+                        [0,2,4,6,8].forEach((num) => {
+                            data[num][year+offset] += parseFloat(seg[num][year] || 0);
+                        });
+                        data[14][year+offset] += seg[10][year] || 0;
+                    }
+                }
             }
         })
         for(let year = 0; year < data[0].length; year++) {
             data[1][year] = year===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
-            data[10][year] = corpExp[year] * data[0][year];
-            data[11][year] = corpExp[year];
-            data[16][year] = corpDep[year] * data[0][year];
-            data[17][year] = corpDep[year];
+            data[10][year] = this.rawdata["Corp Exp"][year] * data[0][year];
+            data[11][year] = this.rawdata["Corp Exp"][year];
+            data[16][year] = this.rawdata["Corp Dep"][year] * data[0][year];
+            data[17][year] = this.rawdata["Corp Dep"][year];
             data[12][year] = data[8][year] - data[10][year];
             data[21][year] = this.input["GEN"]["Standalone Tax Rate"];
             data[20][year] = data[21][year] * data[12][year];
@@ -566,12 +599,26 @@ class DataManager {
         keys.forEach((segKey) => {
             if(segKey!=="CONS") {
                 const seg = dataManagerInstance.rawdata["COST"][segKey];
+                const tradeYear = this.input["GEN"]["Trade Year"]
+                const segStartYear = dataManagerInstance.input["COST"][segKey]["startingyear"];
+                const yearDif = tradeYear-segStartYear;
+                if(yearDif >= 0) {
                     for(let year = 0; year < data[0].length; year++) {
-                        data[0][year] += parseFloat(seg[0][year]); //REV
-                        data[1][year] += parseFloat(seg[2][year]); //GP
-                        data[2][year] += parseFloat(seg[3][year]); //A&C
-                        data[3][year] += parseFloat(seg[4][year]); //SG&A
+                        data[0][year] += parseFloat(seg[0][year+yearDif] || 0); //REV
+                        data[1][year] += parseFloat(seg[2][year+yearDif] || 0); //GP
+                        data[2][year] += parseFloat(seg[3][year+yearDif] || 0); //A&C
+                        data[3][year] += parseFloat(seg[4][year+yearDif] || 0); //SG&A
                     }
+                } else {
+                    const offset = yearDif * -1;
+                    for(let year = 0; year < seg[0].length; year++) {
+                        if(year+offset > data[0].length) break
+                        data[0][year+offset] += parseFloat(seg[0][year] || 0); //REV
+                        data[1][year+offset] += parseFloat(seg[2][year] || 0); //GP
+                        data[2][year+offset] += parseFloat(seg[3][year] || 0); //A&C
+                        data[3][year+offset] += parseFloat(seg[4][year] || 0); //SG&A
+                    }
+                }
             }
         })
         const runrate = this.input["COST"]["Runrate"]
@@ -657,13 +704,28 @@ class DataManager {
         keys.forEach((segKey) => {
             if(segKey!=="CONS") {
                 const seg = dataManagerInstance.rawdata["REV"][segKey];
+                const tradeYear = this.input["GEN"]["Trade Year"]
+                const segStartYear = dataManagerInstance.input["REV"][segKey]["startingyear"];
+                const yearDif = tradeYear-segStartYear;
+                if(yearDif>=0) {
                     for(let year = 0; year < data[0].length; year++) {
-                        data[0][year] += parseFloat(seg[0][year]);
-                        data[2][year] += parseFloat(seg[2][year]);
-                        data[3][year] += parseFloat(seg[4][year]);
-                        data[4][year] += parseFloat(seg[6][year]);
-                        data[5][year] += parseFloat(seg[8][year]);
+                        data[0][year] += parseFloat(seg[0][year+yearDif] || 0);
+                        data[2][year] += parseFloat(seg[2][year+yearDif] || 0);
+                        data[3][year] += parseFloat(seg[4][year+yearDif] || 0);
+                        data[4][year] += parseFloat(seg[6][year+yearDif] || 0);
+                        data[5][year] += parseFloat(seg[8][year+yearDif] || 0);
                     }
+                } else {
+                    const offset = yearDif * -1;
+                    for(let year = 0; year < seg[0].length; year++) {
+                        if(year+offset > data[0].length) break
+                        data[0][year+offset] += parseFloat(seg[0][year] || 0);
+                        data[2][year+offset] += parseFloat(seg[2][year] || 0);
+                        data[3][year+offset] += parseFloat(seg[4][year] || 0);
+                        data[4][year+offset] += parseFloat(seg[6][year] || 0);
+                        data[5][year+offset] += parseFloat(seg[8][year] || 0);
+                    }
+                }
             }
         })
         for(let year = 0; year < data[0].length; year++) {
@@ -699,11 +761,24 @@ class DataManager {
         keys.forEach((segKey) => {
             if(segKey!=="CONS") {
                 const seg = dataManagerInstance.rawdata["DIS"][segKey];
+                const tradeYear = this.input["GEN"]["Trade Year"]
+                const segStartYear = dataManagerInstance.input["DIS"][segKey]["startingyear"];
+                const yearDif = tradeYear-segStartYear;
+                if(yearDif>=0) {
                     for(let year = 0; year < data[0].length; year++) {
                         [0,1,2,3].forEach((num) => {
-                            data[num][year] += parseFloat(seg[num][year]);
+                            data[num][year] += parseFloat(seg[num][year+yearDif] || 0);
                         })
                     }
+                } else {
+                    const offset = yearDif * -1;
+                    for(let year = 0; year < seg[0].length; year++) {
+                        if(year+offset > data[0].length) break;
+                        [0,1,2,3].forEach((num) => {
+                            data[num][year+offset] += parseFloat(seg[num][year] || 0);
+                        })
+                    }
+                }
             }
         })
         for(let year = 0; year < data[0].length; year++) {
@@ -734,13 +809,28 @@ class DataManager {
         keys.forEach((segKey) => {
             if(segKey!=="CONS") {
                 const seg = dataManagerInstance.rawdata["NCORE"][segKey];
+                const tradeYear = this.input["GEN"]["Trade Year"]
+                const segStartYear = dataManagerInstance.input["NCORE"][segKey]["startingyear"];
+                const yearDif = tradeYear-segStartYear;
+                if(yearDif>=0) {
                     for(let year = 0; year < data[0].length; year++) {
-                        data[0][year] += parseFloat(seg[0][year]);
-                        data[2][year] += parseFloat(seg[2][year]);
-                        data[3][year] += parseFloat(seg[4][year]);
-                        data[4][year] += parseFloat(seg[6][year]);
-                        data[7][year] += parseFloat(seg[10][year]);
+                        data[0][year] += parseFloat(seg[0][year+yearDif] || 0);
+                        data[2][year] += parseFloat(seg[2][year+yearDif] || 0);
+                        data[3][year] += parseFloat(seg[4][year+yearDif] || 0);
+                        data[4][year] += parseFloat(seg[6][year+yearDif] || 0);
+                        data[7][year] += parseFloat(seg[10][year+yearDif] || 0);
                     }
+                } else {
+                    const offset = yearDif * -1;
+                    for(let year = 0; year < seg[0].length; year++) {
+                        if(year+offset > data[0].length) break;
+                        data[0][year+offset] += parseFloat(seg[0][year] || 0);
+                        data[2][year+offset] += parseFloat(seg[2][year] || 0);
+                        data[3][year+offset] += parseFloat(seg[4][year] || 0);
+                        data[4][year+offset] += parseFloat(seg[6][year] || 0);
+                        data[7][year+offset] += parseFloat(seg[10][year] || 0);
+                    }
+                }
             }
         })
         for(let year = 0; year < data[0].length; year++) {
@@ -778,7 +868,7 @@ class DataManager {
         let syn = this.createEmptyArray(constants.row_labels.length, this.numYears);
 
         for(let year = 0; year < seg[0].length; year++) {
-            if(this.startYear + year <= this.tradeYear) {
+            if(this.input["GEN"]["Trade Year"] + year <= this.tradeYear) {
                 for(let num = 0; num < standalone.length; num++) {
                     syn[num][year] = standalone[num][year];
                 }
@@ -803,9 +893,9 @@ class DataManager {
 
     // IRR THINGS
 
-    getFCFList = (val, segData=NONE) => {
+    getFCFList = (val, segData=null) => {
         let p = [];
-        const seg = segData===NONE ? this.getSegment("CONS") : segData;
+        const seg = segData===null ? this.getSegment("CONS") : segData;
 
         const cost = this.getCost("CONS");
         const rev = this.getRev("CONS");
@@ -814,15 +904,15 @@ class DataManager {
         const yr1c = this.input["GEN"]["Year 1 OTC"] * -1;
         const yr2c = this.input["GEN"]["Year 2 OTC"] * -1;
         for(let year = 0; year < seg[0].length; year++) {
-            if(year + this.startYear > this.tradeYear) {
+            if(year + this.input["GEN"]["Trade Year"] > this.input["GEN"]["Trade Year"]) {
                 let amount = 0;
                 if(val===1) {
-                    amount += (year + this.startYear - this.tradeYear)===1 ? yr1c : 0;
-                    amount += (year + this.startYear - this.tradeYear)===2 ? yr2c : 0;
+                    amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===1 ? yr1c : 0;
+                    amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===2 ? yr2c : 0;
                     amount += seg[28][year] + cost[8][year] + rev[18][year] + dis[8][year] - ncore[19][year];
                 } else if(val===2) {
-                    amount += (year + this.startYear - this.tradeYear)===1 ? yr1c : 0;
-                    amount += (year + this.startYear - this.tradeYear)===2 ? yr2c : 0;
+                    amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===1 ? yr1c : 0;
+                    amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===2 ? yr2c : 0;
                     amount += seg[28][year] + cost[8][year] + dis[8][year] - ncore[19][year];
                 } else if(val===3) {
                     amount += seg[28][year];
@@ -835,7 +925,7 @@ class DataManager {
         return p;
     }
 
-    getIRR = (prices, val, segData=NONE) => {
+    getIRR = (prices, val, segData=null) => {
         this.calcConsolidatedCost();
         this.calcConsolidatedRev();
         const fcfList = this.getFCFList(val, segData);
@@ -968,14 +1058,14 @@ class DataManager {
         +nc_nwc+rev_nwc+otc+oll+taxes+tax_impact+mdlz_jvs+mdlz_jvs_impact+mdlz_other+mdlz_other_impact+restruct+sbc+pension+amort;
     }
 
-    epsStuff = (prices, year, tnopat=NONE) => {
+    epsStuff = (prices, year, tnopat=null) => {
         let l1 = [];
         let l2 = [];
 
         const c2 = this.input["GEN"]["MDLZ Debt"] * this.input["GEN"]["MDLZ Debt Rate"]
         + this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Acquisition Rate"]
 
-        const currYear = year-this.startYear-1;
+        const currYear = year-this.input["GEN"]["Trade Year"]-1;
         const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
 
         const mdlz_stat_quo_eps = this.rawdata["MDLZ"][0][currYear]
@@ -1090,7 +1180,7 @@ class DataManager {
     growthEPSSensitivity = (growthRates, price, years) => {
         let eps = [];
         // years.forEach((year, index) => {
-        //     const realYear = year-this.startYear-1;
+        //     const realYear = year-this.input["GEN"]["Trade Year"]-1;
         //     console.log(realYear)
         //     let curr = [];
         //     growthRates.forEach((rate) => {
@@ -1112,7 +1202,7 @@ class DataManager {
                 data[0][year] = data[0][year-1] * (1+rate);
             }
             years.forEach((year, index) => {
-                const realYear = year-this.startYear;
+                const realYear = year-this.input["GEN"]["Trade Year"];
                 const nopat = data[0][realYear] * data[13][realYear] * (1-data[21][realYear]);
                 const tnopat = this.getTNOPAT(nopat, realYear);
                 const group = this.epsStuff([price], year, tnopat)
@@ -1198,13 +1288,25 @@ class DataManager {
         if (!file) return;
       
         const reader = new FileReader();
-        reader.onload = (e) => {
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+
+        if(fileExtension==='json') {
+            reader.onload = (e) => {
           const content = e.target.result;
           const newData = JSON.parse(content); // Parse JSON
           dataManagerInstance.updateData(newData); // Update dataManagerInstance with new data
           // Trigger any necessary rerenders here if needed
         };
         reader.readAsText(file); // Read file content as text
+        } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+            reader.onload = (e) => {
+              const binaryStr = e.target.result;
+              this.handleExcelUpload(binaryStr);
+            };
+            reader.readAsBinaryString(file); // Read file content as binary string for Excel files
+          } else {
+            console.warn('Unsupported file type. Please upload a JSON or Excel file.');
+          }
       };
 
       updateData = (saveFileData) => {
@@ -1217,7 +1319,133 @@ class DataManager {
               }
         })
       };
+
+      handleExcelUpload = (binaryStr) => {
+        const workbook = XLSX.read(binaryStr, { type: 'binary' });
+      
+        this.reset();
+
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+          // Check for specific keywords in the sheet name to categorize data
+          if (sheetName.includes('Segment')) {
+            this.addSegmentExcel(sheetData);
+          } else if (sheetName.includes('Cost')) {
+            this.addCostExcel(sheetData)
+          } else if (sheetName.includes('Revenue')) {
+            this.addRevExcel(sheetData)
+          } else if (sheetName.includes('Dis')) {
+            this.addDisExcel(sheetData);
+        } else if (sheetName.includes('Non-Core')) {
+            this.addNcoreExcel(sheetData);
+        } else {
+            console.warn(`Unrecognized sheet name "${sheetName}".`);
+          }
+        });
+      };
+
+      addSegmentExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+
+        this.numSegments++;
+        this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": startingYear};
+        const raw = this.createEmptyArray(constants.seg_labels.length, years.length, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index*2] = rowData;
+            }
+        });
+
+        this.rawdata["SEG"][this.numSegments] = raw
+      }
+
+      addCostExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+
+        this.numCosts++;
+        this.input["COST"][this.numCosts] = {"startingyear": startingYear}
+        const raw = this.createEmptyArray(constants.cost_labels.length, years.length, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index] = rowData;
+            }
+        });
+
+        this.rawdata["COST"][this.numCosts] = raw;
+      }
+
+      addRevExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+
+        this.numRevs++;
+        this.input["REV"][this.numRevs] = {"startingyear": startingYear}
+        const raw = this.createEmptyArray(constants.rev_labels.length, this.numYears, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                if(row[0]==="Segment Mapping") {
+                    let segs = [];
+                    const segments = row.slice(1)
+                    segments.forEach((val) => {
+                        segs.push(val);
+                    })
+                    this.mapRev(segs, this.numRevs);
+                }
+                else {
+                    const rowData = row.slice(1);
+                    raw[index*2] = rowData;
+                }
+            }
+        });
+
+        this.rawdata["REV"][this.numRevs] = raw;
+      };
+
+      addDisExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+
+        this.numDis++;
+        this.input["DIS"][this.numDis] = {"startingyear": startingYear}
+        const raw = this.createEmptyArray(constants.dis_labels.length, this.numYears, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index] = rowData;
+            }
+        });
+
+        this.rawdata["DIS"][this.numDis] = raw;
+      }
+
+      addNcoreExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+
+        this.numCore++;
+        this.input["NCORE"][this.numCore] = {"startingyear": startingYear}
+        const raw = this.createEmptyArray(constants.ncore_labels.length, this.numYears, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index*2] = rowData;
+            }
+        });
+
+        this.rawdata["NCORE"][this.numCore] = raw;
+      };
 }
 
 const dataManagerInstance = new DataManager();
-export default dataManagerInstance;;
+export default dataManagerInstance;
