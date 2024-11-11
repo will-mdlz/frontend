@@ -116,6 +116,12 @@ class DataManager {
         return this.rawdata["SEG"][key];
     };
 
+    removeSegment = (key) => {
+        delete this.input["SA"][key];
+        delete this.rawdata["SEG"][key];
+        this.calcConsolidatedSegment();
+    };
+
     addCostSyn = (val) => {
         this.numCosts++;
         this.input["COST"][this.numCosts] = {"startingyear": 2025}
@@ -132,6 +138,12 @@ class DataManager {
     getCost = (key) => {
         return this.rawdata["COST"][key];
     }
+
+    removeCost = (key) => {
+        delete this.input["COST"][key];
+        delete this.rawdata["COST"][key];
+        this.calcConsolidatedCost();
+    };
 
     addRevSyn = (val, segs) => {
         this.numRevs++;
@@ -185,6 +197,18 @@ class DataManager {
         return this.rawdata["REV"][key];
     }
 
+    removeRev = (key) => {
+        delete this.input["REV"][key];
+        delete this.rawdata["REV"][key];
+        let map = this.rawdata["MAP"]["REV"];
+        Object.keys(map).forEach((num) => {
+            let segmap = map[num];
+            map[num] = segmap.filter(item => item !== parseInt(key));
+        })
+        this.rawdata["MAP"]["REV"] = map;
+        this.calcConsolidatedRev();
+    };
+
     addDis = (val) => {
         this.numDis++;
         this.input["DIS"][this.numDis] = {"startingyear": 2025}
@@ -200,6 +224,12 @@ class DataManager {
         return this.rawdata["DIS"][key];
     }
 
+    removeDis = (key) => {
+        delete this.input["DIS"][key];
+        delete this.rawdata["DIS"][key];
+        this.calcConsolidatedDis();
+    };
+
     getNcore = (key) => {
         return this.rawdata["NCORE"][key];
     }
@@ -214,6 +244,12 @@ class DataManager {
             this.rawdata["NCORE"][this.numCore] = ncore2;
         }
     }
+
+    removeNcore = (key) => {
+        delete this.input["NCORE"][key];
+        delete this.rawdata["NCORE"][key];
+        this.calcConsolidatedNcore();
+    };
     
     initAVP = () => { //in the future we will start on prices, for now auto this case
         return {
@@ -688,7 +724,7 @@ class DataManager {
         const keys = Object.keys(m);
         let dep = 0;
         keys.forEach((num) => { //num is the segment
-            const depperc = this.rawdata["SEG"][num][11][year];
+            const depperc = this.rawdata["SEG"][num] ? this.rawdata["SEG"][num][11][year] : 0;
             let amount = 0;
             m[num].forEach((rev) => { //rev is the rev
                 amount += this.rawdata["REV"][rev][0][year];
