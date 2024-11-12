@@ -479,7 +479,12 @@ class DataManager {
     
     getCombinedSynergized = () => {
         let initialData = [...this.rawdata["Synergized Forecast"]];
-        const row2 = this.rawdata["Standalone Forecast"][0];
+        const rowNC = this.rawdata["NCORE"]["CONS"][0];
+        const rowSF = this.rawdata["Standalone Forecast"][0];
+        let row2 = []
+        for(let year = 0; year<rowSF.length; year++) {
+            row2.push(rowSF[year] - rowNC[year])
+        }
         const row1 = this.rawdata["REV"]["CONS"][0];
         initialData.unshift(row1);
         initialData.unshift(row2);
@@ -613,9 +618,11 @@ class DataManager {
                 data[num][year] = data[num-1][year] / data[0][year];
             })
         }
-        for(let i = 0; i < 10; i++){
+        for(let i = 0; i < 8; i++){
             this.rawdata["Standalone Forecast"][i] = data[i];
         }
+        this.rawdata["Standalone Forecast"][8] = data[12]
+        this.rawdata["Standalone Forecast"][9] = data[13]
         this.rawdata["Standalone Forecast"][10] = data[18]
         this.rawdata["Standalone Forecast"][11] = data[19]
         this.rawdata["SEG"]["CONS"] = data;
@@ -917,7 +924,8 @@ class DataManager {
                 syn[5][year] = syn[0][year] === 0 ? 0 : syn[4][year]/syn[0][year];
                 syn[6][year] = seg[6][year] + seg[10][year] + cost[3][year] + rev[4][year] + dis[3][year] - ncore[4][year]; // SG&A / Corp Exp
                 syn[7][year] = syn[0][year] === 0 ? 0 : syn[6][year]/syn[0][year];
-                syn[8][year] = seg[12][year] + cost[4][year] + rev[5][year] + dis[4][year] - dis[5][year]; // EBIT
+                //syn[8][year] = seg[12][year] + cost[4][year] + rev[5][year] + dis[4][year] - dis[5][year]; // EBIT
+                syn[8][year] = syn[2][year] - syn[4][year] - syn[6][year];
                 syn[9][year] = syn[0][year] === 0 ? 0 : syn[8][year]/syn[0][year];
                 syn[10][year] = seg[18][year] + cost[4][year] + rev[8][year] + dis[4][year] - ncore[9][year]; // EBITDA
                 syn[11][year] = syn[0][year] === 0 ? 0 : syn[10][year]/syn[0][year];
