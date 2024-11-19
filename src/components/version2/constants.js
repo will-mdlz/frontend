@@ -6,7 +6,7 @@ export const row_labels = [
 
 export const seg_labels = [
   "Total Net Revenue", "% Growth", "Gross Profit", "% Margin", "A&C", "% NR", 
-  "SG&A", "% NR", "EBIT", "% Margin", "D&A", "% NR", "EBITDA", "% Margin"
+  "SG&A", "% NR", "EBIT", "% Margin", "D&A", "% NR", "EBITDA", "% Margin",
 ]
 
 export const seg_cons_labels = [
