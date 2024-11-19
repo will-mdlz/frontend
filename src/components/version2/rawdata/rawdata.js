@@ -21,14 +21,6 @@ export const seg1 = [
     [],
     [],
     [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
 ]
 
 export const seg2 = [
