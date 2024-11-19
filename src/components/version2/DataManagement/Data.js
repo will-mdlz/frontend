@@ -19,28 +19,28 @@ class DataManager {
         this.initializeData();
         this.initializeSheetData();
         
-        this.addSegment(1);
-        this.addSegment(2);
-        this.addSegment(3);
+        // this.addSegment(1);
+        // this.addSegment(2);
+        // this.addSegment(3);
 
-        this.addCostSyn(1);
-        this.addCostSyn(2);
+        // this.addCostSyn(1);
+        // this.addCostSyn(2);
 
-        this.addRevSyn(1, [3]);
-        this.addRevSyn(2, [1]);
-        this.addRevSyn(3, [3]);
-        this.addRevSyn(4, [3]);
-        this.addRevSyn(5, [3]);
-        this.addRevSyn(6, [3]);
-        this.addRevSyn(7, [1]);
-        this.addRevSyn(8, [1]);
-        this.addRevSyn(9, [1]);
+        // this.addRevSyn(1, [3]);
+        // this.addRevSyn(2, [1]);
+        // this.addRevSyn(3, [3]);
+        // this.addRevSyn(4, [3]);
+        // this.addRevSyn(5, [3]);
+        // this.addRevSyn(6, [3]);
+        // this.addRevSyn(7, [1]);
+        // this.addRevSyn(8, [1]);
+        // this.addRevSyn(9, [1]);
 
-        this.addDis(1);
-        this.addDis(2);
+        // this.addDis(1);
+        // this.addDis(2);
 
-        this.addNcore(1);
-        this.addNcore(2);
+        // this.addNcore(1);
+        // this.addNcore(2);
 
     }
 
