@@ -1,84 +1,252 @@
 import * as XLSX from 'xlsx';
 import * as constants from "../constants";
-import { seg1, seg2, seg3, cost1, cost2, rev1, rev2, rev3, rev4, rev5, rev6, rev7, rev8, rev9, dis1, dis2, ncore1, ncore2, corpDep, corpExp, mdlz, target } from "../rawdata/rawdata";
 
 class DataManager {
     constructor() {
         this.input = {};
+        this.debt = {};
         this.rawdata = {};
-        this.extrarawdata = {};
+
+        this.freshstart = false;
+
         this.numSegments = 0;
         this.numCosts = 0;
         this.numRevs = 0;
         this.numDis = 0;
         this.numCore = 0;
-        // this.startYear = 2025;
-        // this.tradeYear = 2025;
         this.numYears = 11;
 
         this.initializeData();
         this.initializeSheetData();
-        
-        this.addSegment(1);
-        this.addSegment(2);
-        this.addSegment(3);
-
-        this.addCostSyn(1);
-        this.addCostSyn(2);
-
-        this.addRevSyn(1, [3]);
-        this.addRevSyn(2, [1]);
-        this.addRevSyn(3, [3]);
-        this.addRevSyn(4, [3]);
-        this.addRevSyn(5, [3]);
-        this.addRevSyn(6, [3]);
-        this.addRevSyn(7, [1]);
-        this.addRevSyn(8, [1]);
-        this.addRevSyn(9, [1]);
-
-        this.addDis(1);
-        this.addDis(2);
-
-        this.addNcore(1);
-        this.addNcore(2);
-
+        this.initializeDebt();
     }
 
     initializeData = () => {
-        this.input["SA"] = {};
-        this.input["COST"] = {"Runrate": 57, "Phasing": [.333,.666, 1]};
-        this.input["REV"] = {"Single Syn": 0, "OI Margin Impact": 0, "Runrate Phasing": [0,.25,.50,.75,0], "OI Phasing": [0,0,0,0,0,0]};
-        this.input["DIS"] = {};
-        this.input["NCORE"] = {};
+        this.input["SA"] = this.initInputSeg();
+        this.input["COST"] = this.initInputCost();
+        this.input["REV"] = this.initInputRev();
+        this.input["DIS"] = this.initInputDis();
+        this.input["NCORE"] = this.initInputNcore();
         this.input["GEN"] = this.initGen();
         this.input["CALC"] = this.initCalc();
         this.input["AVP"] = this.initAVP();
+        this.input["Assumptions"] = this.initAssupmtions();
     };
 
     initializeSheetData = () => {
         this.rawdata["Standalone Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
         this.rawdata["Synergized Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
-        this.rawdata["SEG"] = {"CONS": this.createEmptyArray(constants.seg_cons_labels.length, this.numYears)};
-        this.rawdata["REV"] = {"CONS": this.createEmptyArray(constants.rev_cons_labels.length, this.numYears)};
-        this.rawdata["COST"] = {"CONS": this.createEmptyArray(constants.cost_cons_labels.length, this.numYears)};
-        this.rawdata["DIS"] = {"CONS": this.createEmptyArray(constants.dis_cons_labels.length, this.numYears)};
-        this.rawdata["NCORE"] = {"CONS": this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears)};
+        this.rawdata["SEG"] = this.initRawSeg();
+        this.rawdata["REV"] = this.initRawRev();
+        this.rawdata["COST"] = this.initRawCost();
+        this.rawdata["DIS"] = this.initRawDis();
+        this.rawdata["NCORE"] = this.initRawNcore();
         this.rawdata["MAP"] = {"REV": {}}
-        this.rawdata["MDLZ"] = mdlz;
-        this.rawdata["TARGET"] = target;
-        this.rawdata["Corp Exp"] = corpExp;
-        this.rawdata["Corp Dep"] = corpDep;
+        this.rawdata["MDLZ"] = this.initMDLZ();
+        this.rawdata["TARGET"] = this.initTarget();
+        this.rawdata["SYN"] = this.initSyn();
+    }
 
-        // this.extrarawdata["Standalone Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
-        // this.extrarawdata["Synergized Forecast"] = this.createEmptyArray(constants.row_labels.length, this.numYears);
-        // this.extrarawdata["SEG"] = {"CONS": this.createEmptyArray(constants.seg_cons_labels.length, this.numYears)};
-        // this.extrarawdata["REV"] = {"CONS": this.createEmptyArray(constants.rev_cons_labels.length, this.numYears)};
-        // this.extrarawdata["COST"] = {"CONS": this.createEmptyArray(constants.cost_cons_labels.length, this.numYears)};
-        // this.extrarawdata["DIS"] = {"CONS": this.createEmptyArray(constants.dis_cons_labels.length, this.numYears)};
-        // this.extrarawdata["NCORE"] = {"CONS": this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears)};
-        // this.extrarawdata["MAP"] = {"REV": {}}
-        // this.extrarawdata["MDLZ"] = mdlz;
-        // this.extrarawdata["TARGET"] = target;
+    initAVP = () => {
+        return {
+            "Premium to Current Price": [],
+            "% Premium to 52-Week High": [],
+            "Equity Value": [],
+            "Enterprise Value": [],
+            "EV / Year 0 EBITDA": [],
+            "EV / Year 1 EBITDA": [],
+            "% Cash": [],
+            "% Equity": [],
+            "% of MDLZ Shares Issued": [],
+            "% of MDLZ Ownership": [],
+            "% Target Ownership": [],
+            "Implied Trust Ownership": [],
+            "Target Shares of Synergies": [],
+            "MDLZ Shares of Synergies": [],
+            "Cost & Revenue Synergies": [],
+            "Cost Only Synergies": [],
+            "Year 1 ACC": [],
+            "Year 1 DIL": [],
+            "Year 2 ACC": [],
+            "Year 2 DIL": [],
+            "Year 3 ACC": [],
+            "Year 3 DIL": []
+        }
+    }
+
+    initRawSeg = () => {
+        const storedSeg = localStorage.getItem('rawseg');
+        if(!storedSeg || this.freshstart) {
+            return {"CONS": this.createEmptyArray(constants.seg_cons_labels.length, this.numYears), "Syn": {"Syn": Array(this.numYears).fill(0), "startingyear": 0}};
+        } else {
+            const parsedSeg = JSON.parse(storedSeg);
+            parsedSeg["CONS"] = this.createEmptyArray(constants.seg_cons_labels.length, this.numYears);
+            return parsedSeg;
+        }
+    }
+
+    initInputSeg = () => {
+        const storedSeg = localStorage.getItem('inputseg');
+        if(!storedSeg || this.freshstart) {
+            return {};
+        } else {
+            const parsedSeg = JSON.parse(storedSeg);
+            return parsedSeg;
+        }
+    }
+
+    initRawCost = () => {
+        const stored = localStorage.getItem('rawcost');
+
+        if(!stored || this.freshstart) {
+            return {"CONS": this.createEmptyArray(constants.cost_cons_labels.length, this.numYears)};
+        } else {
+            const parsed = JSON.parse(stored);
+            parsed["CONS"] = this.createEmptyArray(constants.cost_cons_labels.length, this.numYears);
+            return parsed;
+        }
+    }
+
+    initInputCost = () => {
+        const stored = localStorage.getItem('inputcost');
+        if(!stored || this.freshstart) {
+            return {"Runrate": 57, "Phasing": [.333,.666, 1]};
+        } else {
+            const parsed = JSON.parse(stored);
+            parsed["Runrate"] = 57;
+            parsed["Phasing"] = [.333,.666, 1];
+            return parsed;
+        }
+    }
+
+    initRawRev = () => {
+        const stored = localStorage.getItem('rawrev');
+
+        if(!stored || this.freshstart) {
+            return {"CONS": this.createEmptyArray(constants.rev_cons_labels.length, this.numYears), 
+                "Syn": Array(this.numYears).fill(0)};
+        } else {
+            const parsed = JSON.parse(stored);
+            parsed["CONS"] = this.createEmptyArray(constants.rev_cons_labels.length, this.numYears);
+            return parsed;
+        }
+    }
+
+    initInputRev = () => {
+        const storedRev = localStorage.getItem('inputrev');
+
+        if(!storedRev || this.freshstart) {
+            return {"Single Syn": 0, "OI Margin Impact": 0, "Runrate Phasing": [0,.25,.50,.75,0], "OI Phasing": [0,0,0,0,0,0]};
+        } else {
+            const parsedRev = JSON.parse(storedRev);
+            parsedRev["Single Syn"] = 0;
+            parsedRev["OI Margin Impact"] = 0
+            parsedRev["Runrate Phasing"] = [0,.25,.50,.75,0]
+            parsedRev["OI Phasing"] = [0,0,0,0,0,0];
+            return parsedRev;
+        }
+    }
+
+    initRawDis = () => {
+        const stored = localStorage.getItem('rawdis');
+
+        if(!stored || this.freshstart) {
+            return {"CONS": this.createEmptyArray(constants.dis_cons_labels.length, this.numYears)};
+        } else {
+            const parsed = JSON.parse(stored);
+            parsed["CONS"] = this.createEmptyArray(constants.dis_cons_labels.length, this.numYears);
+            return parsed;
+        }
+    }
+
+    initInputDis = () => {
+        const stored = localStorage.getItem('inputdis');
+        if(!stored || this.freshstart) {
+            return {};
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initRawNcore = () => {
+        const stored = localStorage.getItem('rawncore');
+
+        if(!stored || this.freshstart) {
+            return {"CONS": this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears)};
+        } else {
+            const parsed = JSON.parse(stored);
+            parsed["CONS"] = this.createEmptyArray(constants.ncore_cons_labels.length, this.numYears);
+            return parsed;
+        }
+    }
+    
+    initInputNcore = () => {
+        const stored = localStorage.getItem('inputncore');
+        if(!stored || this.freshstart) {
+            return {};
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initMDLZ = () => {
+        const stored = localStorage.getItem('mdlz');
+        if(!stored || this.freshstart) {
+            return this.createEmptyArray(constants.mdlz_labels.length, this.numYears);
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initTarget = () => {
+        const stored = localStorage.getItem('target');
+        if(!stored || this.freshstart) {
+            return this.createEmptyArray(constants.target_labels.length, this.numYears);
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initAssupmtions = () => {
+        const stored = localStorage.getItem('assumptions');
+        if(!stored || this.freshstart) {
+            return [];
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initSyn = () => {
+        const stored = localStorage.getItem('syn');
+        if(!stored || this.freshstart) {
+            return {"Syn": [], "startingyear": 0}
+        } else {
+            const parsed = JSON.parse(stored);
+            return parsed;
+        }
+    }
+
+    initializeDebt = () => {
+        let temp = {}
+        for(let i = 0; i < 6; i++) {
+            temp[i] = {"Rate": 0, "Amount": 0}
+        }
+
+        temp = {
+            0: {"Rate": .023, "Amount": 500},
+            1: {"Rate": .072, "Amount": 194},
+            2: {"Rate": .0425, "Amount": 350},
+            3: {"Rate": .0245, "Amount": 300},
+            4: {"Rate": .017, "Amount": 350},
+            5: {"Rate": .0344, "Amount": 1450},
+        }
+
+        this.debt = temp;
     }
 
     reset = () => {
@@ -99,17 +267,6 @@ class DataManager {
         this.numSegments++;
         this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": 2025};
         this.rawdata["SEG"][this.numSegments] = this.createEmptyArray(constants.seg_labels.length, this.numYears, 0);
-        //this.extrarawdata["SEG"][this.numSegments] = this.createEmptyArray(constants.seg_labels.length, this.numYears, 0);
-        if(val===1) {
-            this.rawdata["SEG"][this.numSegments] = seg1;
-            //this.extrarawdata["SEG"][this.numSegments] = seg1;
-        } else if(val===2) {
-            this.rawdata["SEG"][this.numSegments] = seg2;
-            //this.extrarawdata["SEG"][this.numSegments] = seg2;
-        } else if(val===3) {
-            this.rawdata["SEG"][this.numSegments] = seg3;
-            //this.extrarawdata["SEG"][this.numSegments] = seg3;
-        }
     };
 
     getSegment = (key) => {
@@ -126,13 +283,6 @@ class DataManager {
         this.numCosts++;
         this.input["COST"][this.numCosts] = {"startingyear": 2025}
         this.rawdata["COST"][this.numCosts] = this.createEmptyArray(constants.cost_labels.length, this.numYears, 0);
-        if(val===1) {
-            this.rawdata["COST"][this.numCosts] = cost1;
-            //this.extrarawdata["COST"][this.numCosts] = cost1;
-        } else if(val===2) {
-            this.rawdata["COST"][this.numCosts] = cost2;
-            //this.extrarawdata["COST"][this.numCosts] = cost2;
-        }
     }
 
     getCost = (key) => {
@@ -149,34 +299,6 @@ class DataManager {
         this.numRevs++;
         this.input["REV"][this.numRevs] = {"startingyear": 2025}
         this.rawdata["REV"][this.numRevs] = this.createEmptyArray(constants.rev_labels.length, this.numYears, 0);
-        if(val===1) {
-            this.rawdata["REV"][this.numRevs] = rev1;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===2) {
-            this.rawdata["REV"][this.numRevs] = rev2;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===3) {
-            this.rawdata["REV"][this.numRevs] = rev3;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===4) {
-            this.rawdata["REV"][this.numRevs] = rev4;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===5) {
-            this.rawdata["REV"][this.numRevs] = rev5;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===6) {
-            this.rawdata["REV"][this.numRevs] = rev6;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===7) {
-            this.rawdata["REV"][this.numRevs] = rev7;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===8) {
-            this.rawdata["REV"][this.numRevs] = rev8;
-            this.mapRev(segs, this.numRevs);
-        } else if(val===9) {
-            this.rawdata["REV"][this.numRevs] = rev9;
-            this.mapRev(segs, this.numRevs);
-        }
     }
 
     mapRev = (segs, rev) => {
@@ -213,11 +335,6 @@ class DataManager {
         this.numDis++;
         this.input["DIS"][this.numDis] = {"startingyear": 2025}
         this.rawdata["DIS"][this.numDis] = this.createEmptyArray(constants.dis_labels.length, this.numYears, 0);
-        if(val===1) {
-            this.rawdata["DIS"][this.numDis] = dis1;
-        } else if(val===2) {
-            this.rawdata["DIS"][this.numDis] = dis2;
-        }
     }
 
     getDis = (key) => {
@@ -238,11 +355,7 @@ class DataManager {
         this.numCore++;
         this.input["NCORE"][this.numCore] = {"startingyear": 2025}
         this.rawdata["NCORE"][this.numCore] = this.createEmptyArray(constants.ncore_labels.length, this.numYears, 0);
-        if(val===1) {
-            this.rawdata["NCORE"][this.numCore] = ncore1;
-        } else if(val===2) {
-            this.rawdata["NCORE"][this.numCore] = ncore2;
-        }
+
     }
 
     removeNcore = (key) => {
@@ -250,46 +363,23 @@ class DataManager {
         delete this.rawdata["NCORE"][key];
         this.calcConsolidatedNcore();
     };
-    
-    initAVP = () => { //in the future we will start on prices, for now auto this case
-        return {
-            "Premium to Current Price": [191.78, .095, .147, .199, .251, .304, .356],
-            "% Premium to 52-Week High": [211.92, -.009, .038, .085, .133, .18, .227],
-            "Equity Value": [42.7, 44.7, 46.8, 48.8, 50.8, 52.9],
-            "Enterprise Value": [43.7, 47.6, 49.7, 51.7, 53.8, 55.8, 57.8],
-            "EV / 2025E EBITDA": [2513, 19.0, 19.8, 20.6, 21.4, 22.2, 23.0],
-            "EV / 2026E EBITDA": [3243, 14.7, 15.3, 15.9, 16.6, 17.2, 17.8],
-            "% Cash": [.394, .375, .359, .344, .330, 6.719],
-            "% Equity": [.606, .625, .641, .656, .670, -15.619],
-            "% of MDLZ Shares Issued": [.257, .278, .300, .321, .339, .361],
-            "% of MDLZ Ownership": [.792, .78, .767, .755, .744, 1.193],
-            "% Target Ownership": [.208, .22, .233, .245, .256, -.193],
-            "Implied Trust Ownership": [.058, .061, .064, .068, .071, -.053],
-            "Cost Only Synergies": [.102, .096, .0, .086, .081, .478],
-            "Cost & Revenue Synergies": [.109, .103, .0, .093, .088, .083],
-            "2026E ACC": [-.39, -.45, -.51, -.57, -.63, 1.61],
-            "2026E DIL": [-.103, -.12, -.136, -.152, -.168, .43],
-            "2027E ACC": [-.16, -.24, -.31, -.37, -.44, 2.13],
-            "2027E DIL": [-.04, -.058, -.076, -.092, -.109, .526],
-            "2028E ACC": [.06, -.02, -.1, -.18, -.26, 2.67],
-            "2028E DIL": [.014, -.005, -.024, -.042, -.059, 60.7],
-            "Target Shares of Synergies": [3.1, 3.3, 3.5, 3.7, 3.9, -2.9],
-            "MDLZ Shares of Synergies": [12, 11.8, 11.6, 11.4, 11.2, 18]
-        }
-    }
 
     initGen = () => {
-        return {
-            "Standalone Tax Rate": .24, "MDLZ Tax Rate": .24, "Interest Rate": .03, "WACC": .08, "PGR": .03,
-            "Target Share Price": 191.78, "52-Week High": 211.92, "Purchase Price per Share": 230, "SO": 202.29, "Target Net Debt": 4949, 
-            "% Cash": .359, "% Equity": .641,"% Interest Deductible": .7, "Dividends / Share": 2.09,
-            "Trust % Ownership": .277, "MDLZ 2025 FDSO": 1332, "Total FDSO": 1736,
-            "Transaction Years": 15, "Amortization %": .15, "Target BV Equity": 4010,
-            "Target Rollover Debt": 5416, "Target Rollover Debt Rate": .0355, "MDLZ Debt": 21394, "MDLZ Debt Rate": .027, "Acquisition Debt": 18499, "Acquisition Rate": .055, 
-            "Beginning Cash": 2184, "Ending Cash": 2000, "Minimum Cash Balance": -2000, "OTC": 1845,
-            "FDSO at Offer": 203.361, "MDLZ Current FDSO": 1347, "MDLZ Share Price": 74.18, "Target Current Cash": 467, "Non-Core Divestiture": 322,
-            "Debt Issurance Fees": .0055, "Transaction Fees %": .004, "Control Fees": 55, "KKR": 1669, "Target NWC Change": -.05, "CAPEX % of NR": .04, "Year 1 OTC": 799, "Year 2 OTC": 799,
-            "Trade Year": 2025,
+        const storedGen = localStorage.getItem('gen');
+        if(!storedGen) {
+            return {
+                "Standalone Tax Rate": .24, "MDLZ Tax Rate": .24, "WACC": .08, "PGR": .03,
+                "Annual Intangible Ammortization": 0, "Annual PP&E Stepup": 0, "Debt Issurance Fees": 0, "Transaction Fees %": 0,
+                "Control Fees": 0, "CAPEX % of NR": 0, "Minimum Cash Balance": 0, "Trade Year": 0, "Dividend YoY % (first 3 years)": 0,
+                "Dividend YoY %": 0, "Interest Tax Rate": 0, "% Interest Deductible": 0, "Interest Income Rate": 0, "Max leverage": 0,
+                "Synergy Credit for Leverage": 0, "Dividends / Share": 0, "% ∆ in NWC as % ∆ in Revenue": 0, "OTC": 0, "Year 1 OTC": 0,
+                "Year 2 OTC": 0, "KKR": 0, "Non-Core Divestiture": 0, "Target Share Price": 0, "52-Week High": 0, "SO": 0, "FDSO at Offer": 0,
+                "Target Net Debt": 0, "Trust % Ownership": 0, "BV Equity": 0, "Target Current Cash": 0, "Target Short Term Debt": 0, "MDLZ Share Price": 0,
+                "MDLZ 2025 FDSO": 0, "Current FDSO": 0, "2025 MDLZ Debt": 0, "2025 MDLZ Cash": 0, "Total FDSO": 0, "% Cash": 0, "% Equity": 0, "Beginning Cash": 0, "Ending Cash": 0
+            }
+        } else {
+            const parsedGen = JSON.parse(storedGen);
+            return parsedGen;
         }
     }
 
@@ -312,27 +402,50 @@ class DataManager {
 
     // #### CALC AVP THINGS //
 
-    calcAVP = (prices) => {
+    calcAVP = (prices, numyears) => {
+        this.input["GEN"]["Acquisition Debt"] = this.calcAcquDebt();
         this.input["AVP"]["Premium to Current Price"] = this.calcPremium(prices);
         this.input["AVP"]["% Premium to 52-Week High"] = this.calcHigh(prices);
         this.input["AVP"]["Equity Value"] = this.calcEquity(prices);
         this.input["AVP"]["Enterprise Value"] = this.calcEnterpriseValue(prices);
-        this.input["AVP"]["EV / 2025E EBITDA"] = this.calcEVEBITDA(2025, prices);
-        this.input["AVP"]["EV / 2026E EBITDA"] = this.calcEVEBITDA(2026, prices);
+        this.input["AVP"]["EV / Year 0 EBITDA"] = this.calcEVEBITDA(2025, prices);
+        this.input["AVP"]["EV / Year 1 EBITDA"] = this.calcEVEBITDA(2026, prices);
         this.calcCashEquity(prices);
         this.calcSharesIssue(prices,2030, 2028, 15);
-        // this.epsStuff(prices, 2026);
-        // this.epsStuff(prices, 2027);
-        // this.epsStuff(prices, 2028);
-        const eps1 = this.epsStuff(prices, 2026);
-        this.input["AVP"][`2026E ACC`] = eps1[0]
-        this.input["AVP"][`2026E DIL`] = eps1[1]
-        const eps2 = this.epsStuff(prices, 2027);
-        this.input["AVP"][`2027E ACC`] = eps2[0]
-        this.input["AVP"][`2027E DIL`] = eps2[1]
-        const eps3 = this.epsStuff(prices, 2028);
-        this.input["AVP"][`2028E ACC`] = eps3[0]
-        this.input["AVP"][`2028E DIL`] = eps3[1]
+
+        this.storeIRRs(prices);
+
+        const eps_new = this.getEps(prices,2026, numyears)
+
+        // this.input["AVP"]["Year 1 ACC"] = eps_new[0][0]
+        // this.input["AVP"]["Year 1 DIL"] = eps_new[0][1]
+        // this.input["AVP"]["Year 2 ACC"] = eps_new[1][0]
+        // this.input["AVP"]["Year 2 DIL"] = eps_new[1][1]
+        // this.input["AVP"]["Year 3 ACC"] = eps_new[2][0]
+        // this.input["AVP"]["Year 3 DIL"] = eps_new[2][1]
+
+        for(let i = 1; i < numyears+1; i++) {
+            this.input["AVP"][`Year ${i} ACC`] = eps_new[i-1][0]
+            this.input["AVP"][`Year ${i} DIL`] = eps_new[i-1][1]
+        }
+
+        console.log(this.input["AVP"])
+    }
+
+    calcAcquDebt = () => {
+        const mdlz_ebitda = 6998
+        const target_ebitda = this.rawdata["Standalone Forecast"][10][0]
+        const cost_syn = this.rawdata["COST"]["CONS"][4][3];
+        const syn_mult = this.input["GEN"]["Synergy Credit for Leverage"] * cost_syn;
+        const non_core = this.rawdata["NCORE"]["CONS"][9][0];
+        const ebitda = mdlz_ebitda+target_ebitda+syn_mult
+        const sub_core = ebitda-non_core
+        const tnd = this.input["GEN"]["2025 MDLZ Debt"] - this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Net Debt"]
+        const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+        const bull_tnd = tnd + bull_cash
+        const lvg = bull_tnd/sub_core
+        const inc_lev = this.input["GEN"]["Max leverage"] - lvg;
+        return inc_lev * sub_core
     }
 
     calcPremium = (prices) => {
@@ -375,7 +488,11 @@ class DataManager {
         if(val){
             l.push(val)
         } else { //get real EBITDA
-            l.push(this.rawdata["Synergized Forecast"][10][year-this.input["GEN"]["Trade Year"]])
+            if(year===this.input["GEN"]["Trade Year"]) {
+                l.push(this.rawdata["Standalone Forecast"][10][year-this.input["GEN"]["Trade Year"]])
+            } else {
+                l.push(this.rawdata["Synergized Forecast"][10][year-this.input["GEN"]["Trade Year"]])
+            }
         }
         for(let i = 0; i < prices.length; i++) {
             l.push( this.input["AVP"]["Enterprise Value"][i+1] / (l[0]/1000) );
@@ -391,14 +508,17 @@ class DataManager {
             const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]);
             const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
             const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
-            const uses = purchase_equity_value + this.input["CALC"]["Total Target Debt"] + this.input["CALC"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"]
-
-            const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"];
-            const val2 = this.input["CALC"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
+            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
+            const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
+            
+            const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"] + bull_cash + this.input["GEN"]["Minimum Cash Balance"];
+            const val2 = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
             const cash_issued = val1 - val2;
 
             const total = equity_issued + cash_issued;
+
+            //fucking end me if I have to redo this again
 
             l1.push(cash_issued/total)
             l2.push(equity_issued/total)
@@ -419,10 +539,13 @@ class DataManager {
             const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]);
             const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
             const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
-            const uses = purchase_equity_value + this.input["CALC"]["Total Target Debt"] + this.input["CALC"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"]
+            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
+            const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]            
+
             const shares_issued = equity_issued/this.input["GEN"]["MDLZ Share Price"];
-            l.push(shares_issued/this.input["GEN"]["MDLZ Current FDSO"])
+
+            l.push(shares_issued/this.input["GEN"]["Current FDSO"])
 
             l1.push(1-shares_issued/(shares_issued+this.input["GEN"]["MDLZ 2025 FDSO"]))
             l2.push(1-l1[i]);
@@ -440,7 +563,7 @@ class DataManager {
     };
 
     calcCombinedNPV = (revyear, costyear, multiple) => {
-        const revval = this.rawdata["REV"]["CONS"][5][revyear-this.input["GEN"]["Trade Year"]];
+        const revval = this.rawdata["REV"]["CONS"][8][revyear-this.input["GEN"]["Trade Year"]];
         const revexp = this.rawdata["REV"]["CONS"][14][revyear-this.input["GEN"]["Trade Year"]];
         const keys = Object.keys(this.rawdata["COST"])
         let costval = 0
@@ -449,6 +572,7 @@ class DataManager {
                 costval += this.rawdata["COST"][key][5][this.numYears-1];
             }
         })
+
         const costexp = this.rawdata["DIS"]["CONS"][4][costyear-this.input["GEN"]["Trade Year"]];
 
         const factorrev = Math.pow(1/(1+this.input["GEN"]["WACC"]),(-.5 + revyear - this.input["GEN"]["Trade Year"]));
@@ -458,21 +582,30 @@ class DataManager {
 
         const costsyn = (costval+costexp) * multiple * factorcost;
 
-        const otc1 = this.input["GEN"]["Year 1 OTC"] * Math.pow(1/(1+this.input["GEN"]["WACC"]),.5);
-        const otc2 = this.input["GEN"]["Year 2 OTC"] * Math.pow(1/(1+this.input["GEN"]["WACC"]),1.5);
+
+        const otc1 = (this.input["GEN"]["Year 1 OTC"]) * Math.pow(1/(1+this.input["GEN"]["WACC"]),.5);
+        const otc2 = (this.input["GEN"]["Year 2 OTC"]) * Math.pow(1/(1+this.input["GEN"]["WACC"]),1.5);
         const otc = otc1 + otc2;
 
-        return revsyn + costsyn - otc;
+        const nwc1 = this.rawdata["SYN"]['Syn'][1]* Math.pow(1/(1+this.input["GEN"]["WACC"]),.5)
+        const nwc2 = this.rawdata["SYN"]['Syn'][2]* Math.pow(1/(1+this.input["GEN"]["WACC"]),1.5)
+        const nwc3 = this.rawdata["SYN"]['Syn'][3]* Math.pow(1/(1+this.input["GEN"]["WACC"]),2.5)
+
+        const tnwc = nwc1+nwc2+nwc3
+
+        return revsyn + costsyn - otc -tnwc;
     }
 
     // ### GET ARRAYS FOR SHEETS 
 
     getCombinedStandalone = () => {
         let initialData = [...this.rawdata["Standalone Forecast"]];
-        const keys = Object.keys(this.rawdata.SEG);
+        const keys = Object.keys(this.rawdata.SEG).filter((key) => key !== "Syn");
         for(let i = keys.length-2; i >= 0; i--) {
             const currRow = this.rawdata["SEG"][keys[i]][0];
-            initialData.unshift(currRow);
+            const segStartYear = dataManagerInstance.input["SA"][keys[i]]["startingyear"];
+            const tradeYear = this.input["GEN"]["Trade Year"]
+            initialData.unshift(currRow.slice(tradeYear-segStartYear));
         }
         return initialData;
     };
@@ -497,12 +630,30 @@ class DataManager {
         
     }
 
-    calcSegment = (key) => {
+    calcSegmentCOGS = (key) => {
         const data = this.rawdata["SEG"][key];
         if(data) {
             for(let year = 0; year < data[0].length; year++) {
-                data[1][year] = year===0 ? 0 : data[0][year-1]===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
+                // data[8][year] = data[2][year] - data[4][year] - data[6][year];
+                // data[12][year] = data[8][year] + parseFloat(data[10][year]);
+                // [3,5,7,9,11,13].forEach((num) => {
+                //     data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
+                // });
+
+                data[0][year] = year===0 ? data[0][year] : data[0][year-1] * (1+(data[14][year] + data[15][year]+data[16][year]));
+                data[1][year] = year===0 ? 0 : (data[0][year] / data[0][year-1]) - 1
+
+                data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
+                data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
+
+                data[17][year] = data[18][year] + data[19][year]
+                data[21][year] = year===0 ? 0 : data[20][year]/data[20][year-1] -1
+
+                data[2][year] = data[0][year] - data[17][year];
+                // data[4][year] = data[5][year] * data[0][year];
+                // data[6][year] = data[7][year] * data[0][year];
                 data[8][year] = data[2][year] - data[4][year] - data[6][year];
+                //data[10][year] = data[11][year] * data[0][year];
                 data[12][year] = data[8][year] + parseFloat(data[10][year]);
                 [3,5,7,9,11,13].forEach((num) => {
                     data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
@@ -510,24 +661,6 @@ class DataManager {
             }
             //this.updateSAInput(key);
         }
-    }
-
-    calcSegment2 = (key) => {
-        const oi_marg = this.input["SA"][key]["Proj"]
-        const data = this.rawdata["SEG"][key];
-        for(let year = 0; year < data[0].length; year++) {
-            data[1][year] = year===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
-            if(year<3) {
-                data[8][year] = data[0][year] * oi_marg[year];
-            } else {
-                data[8][year] = data[8][year-1] * (1+oi_marg[3]);
-            }
-            data[12][year] = data[8][year] + data[10][year];
-            [3,5,7,9,11,13].forEach((num) => {
-                data[num][year] = data[num-1][year]/data[0][year];
-            });
-        }
-        this.updateSAInput(key);
     }
 
     updateSAInput = (key) => {
@@ -559,8 +692,8 @@ class DataManager {
     initialCalc = () => {
         const keys = Object.keys(dataManagerInstance.rawdata.SEG);
         keys.forEach((segKey) => {
-            if(segKey!=="CONS") {
-                this.calcSegment(segKey);
+            if(segKey!=="CONS"&&segKey!=="Syn") {
+                this.calcSegmentCOGS(segKey);
             }
         })
         
@@ -570,10 +703,10 @@ class DataManager {
     calcConsolidatedSegment = () => {
         const data = this.createEmptyArray(constants.seg_cons_labels.length, this.numYears);
         const keys = Object.keys(dataManagerInstance.rawdata.SEG);
+        const tradeYear = this.input["GEN"]["Trade Year"]
         keys.forEach((segKey) => {
-            if(segKey!=="CONS") {
+            if(segKey!=="CONS"&&segKey!=="Syn") {
                 const seg = dataManagerInstance.rawdata["SEG"][segKey];
-                const tradeYear = this.input["GEN"]["Trade Year"]
                 const segStartYear = dataManagerInstance.input["SA"][segKey]["startingyear"];
                 const yearDif = tradeYear-segStartYear;
                 if(yearDif>=0) {
@@ -582,6 +715,12 @@ class DataManager {
                             data[num][year] += parseFloat(seg[num][year+yearDif] || 0);
                         });
                         data[14][year] += seg[10][year+yearDif] || 0;
+                        [29,30].forEach((num) => {
+                            data[num][year] += year===0 ? 0 : parseFloat(seg[num-15][year]*seg[0][year-1])
+                        });
+                        data[32][year] += seg[17][year]
+                        data[33][year] += seg[18][year]
+                        data[34][year] += seg[19][year]
                     }
                 } else {
                     const offset = yearDif * -1;
@@ -595,29 +734,39 @@ class DataManager {
                 }
             }
         })
+        const corp_exp = this.input["Assumptions"].length > 0 ? this.input["Assumptions"][1] : []
+        const corp_dep = this.input["Assumptions"].length > 0 ? this.input["Assumptions"][0] : []
         for(let year = 0; year < data[0].length; year++) {
             data[1][year] = year===0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
-            data[10][year] = this.rawdata["Corp Exp"][year] * data[0][year];
-            data[11][year] = this.rawdata["Corp Exp"][year];
-            data[16][year] = this.rawdata["Corp Dep"][year] * data[0][year];
-            data[17][year] = this.rawdata["Corp Dep"][year];
+            data[10][year] = corp_exp.length > 0 ? corp_exp[year+5] * data[0][year] : 0;
+            data[11][year] = corp_exp.length > 0 ? corp_exp[year+5] : 0; // corp exp
+            data[16][year] = corp_dep.length > 0 ? corp_dep[year+5] * data[0][year] : 0;
+            data[17][year] = corp_dep.length > 0 ? corp_dep[year+5] : 0; // corp dep
             data[12][year] = data[8][year] - data[10][year];
             data[21][year] = this.input["GEN"]["Standalone Tax Rate"];
             data[20][year] = data[21][year] * data[12][year];
-            data[22][year] = data[12][year] - data[20][year];
+            data[22][year] = data[12][year] - data[20][year]; //nopat oi - income_taxes
             data[23][year] = data[14][year] + data[16][year];
 
             data[18][year] = data[12][year] + data[14][year] + data[16][year];
             data[25][year] = this.input["GEN"]["CAPEX % of NR"];
             data[24][year] = data[25][year] * data[0][year];
-            data[27][year] = this.input["GEN"]["Target NWC Change"]*-1;
-            data[26][year] = year===0 ? 0 : (data[0][year]-data[0][year-1])*data[27][year];
+            //data[27][year] = this.input["GEN"]["% ∆ in NWC as % ∆ in Revenue"]*-1;
+            data[26][year] = this.rawdata["SEG"]["Syn"]["Syn"][year]
+            data[27][year] = year===0 ? 0 : data[0][year]-data[0][year-1]===0 ? 0 : data[26][year] / (data[0][year]-data[0][year-1])
+            //data[26][year] = year===0 ? 0 : (data[0][year]-data[0][year-1])*data[27][year];
 
-            data[28][year] = data[22][year] + data[23][year] - data[24][year] - data[26][year];
+            data[28][year] = data[22][year] + data[23][year] - data[24][year] - data[26][year] + (this.rawdata["TARGET"][4][year+5] || 0);
             [3,5,7,9,11,13,15,17,19,25].forEach((num) => {
                 data[num][year] = data[num-1][year] / data[0][year];
-            })
+            });
+            [29,30].forEach((num) => {
+                data[num][year] = year===0 ? 0 : data[num][year] / data[0][year-1]
+            });
+            data[31][year] = data[1][year] - data[29][year]-data[30][year];
+
         }
+        ///need to adjust for years
         for(let i = 0; i < 8; i++){
             this.rawdata["Standalone Forecast"][i] = data[i];
         }
@@ -726,26 +875,11 @@ class DataManager {
         }
     }
 
-    calcRevDepreciation = (year) => {
-        const m = this.rawdata["MAP"]["REV"];
-        const keys = Object.keys(m);
-        let dep = 0;
-        keys.forEach((num) => { //num is the segment
-            const depperc = this.rawdata["SEG"][num] ? this.rawdata["SEG"][num][11][year] : 0;
-            let amount = 0;
-            m[num].forEach((rev) => { //rev is the rev
-                amount += this.rawdata["REV"][rev][0][year];
-            })
-            dep += amount * depperc;
-        })
-        return dep;
-    }
-
     calcConsolidatedRev = () => {
         const data = this.createEmptyArray(constants.rev_cons_labels.length, this.numYears);
         const keys = Object.keys(dataManagerInstance.rawdata.REV);
         keys.forEach((segKey) => {
-            if(segKey!=="CONS") {
+            if(segKey!=="CONS"&&segKey!=="Syn") {
                 const seg = dataManagerInstance.rawdata["REV"][segKey];
                 const tradeYear = this.input["GEN"]["Trade Year"]
                 const segStartYear = dataManagerInstance.input["REV"][segKey]["startingyear"];
@@ -773,7 +907,7 @@ class DataManager {
         })
         for(let year = 0; year < data[0].length; year++) {
             data[1][year] = year===0 ? 0 : data[0][year-1] === 0 ? 0 : (data[0][year]/data[0][year-1]) - 1;
-            data[6][year] = this.calcRevDepreciation(year);
+            data[6][year] = this.rawdata["REV"]["Syn"][year]
             data[7][year] = data[0][year]===0 ? 0 : data[6][year] / data[0][year];
             data[8][year] = data[6][year] + data[5][year];
             data[9][year] = data[0][year]===0 ? 0 : data[8][year]/data[0][year];
@@ -783,7 +917,7 @@ class DataManager {
             data[13][year] = data[6][year];
             data[15][year] = this.input["GEN"]["CAPEX % of NR"];
             data[14][year] = data[15][year] * data[0][year];
-            data[17][year] = this.input["GEN"]["Target NWC Change"]*-1;
+            data[17][year] = this.input["GEN"]["% ∆ in NWC as % ∆ in Revenue"]*-1;
             data[16][year] = year===0 ? 0 : (data[0][year]-data[0][year-1])*data[17][year];
             data[18][year] = data[12][year] + data[13][year] - data[14][year] - data[16][year];
         }
@@ -889,7 +1023,7 @@ class DataManager {
             data[14][year] = data[7][year];
             data[16][year] = this.input["GEN"]["CAPEX % of NR"];
             data[15][year] = data[16][year] * data[0][year];
-            data[18][year] = this.input["GEN"]["Target NWC Change"]*-1;
+            data[18][year] = this.input["GEN"]["% ∆ in NWC as % ∆ in Revenue"]*-1;
             data[17][year] = year===0 ? 0 : (data[0][year]-data[0][year-1])*data[18][year];
             data[19][year] = data[13][year] + data[14][year] - data[15][year] - data[17][year];
         }
@@ -924,8 +1058,13 @@ class DataManager {
                 syn[5][year] = syn[0][year] === 0 ? 0 : syn[4][year]/syn[0][year];
                 syn[6][year] = seg[6][year] + seg[10][year] + cost[3][year] + rev[4][year] + dis[3][year] - ncore[4][year]; // SG&A / Corp Exp
                 syn[7][year] = syn[0][year] === 0 ? 0 : syn[6][year]/syn[0][year];
-                //syn[8][year] = seg[12][year] + cost[4][year] + rev[5][year] + dis[4][year] - dis[5][year]; // EBIT
-                syn[8][year] = syn[2][year] - syn[4][year] - syn[6][year];
+                syn[8][year] = seg[12][year] + cost[4][year] + rev[5][year] + dis[4][year] - ncore[5][year]; // EBIT
+                // console.log(year, seg[12][year])
+                // console.log(year, cost[12][year])
+                // console.log(year, rev[12][year])
+                // console.log(year, dis[12][year])
+                // console.log(year, seg[12][year])
+                //syn[8][year] = syn[2][year] - syn[4][year] - syn[6][year];
                 syn[9][year] = syn[0][year] === 0 ? 0 : syn[8][year]/syn[0][year];
                 syn[10][year] = seg[18][year] + cost[4][year] + rev[8][year] + dis[4][year] - ncore[9][year]; // EBITDA
                 syn[11][year] = syn[0][year] === 0 ? 0 : syn[10][year]/syn[0][year];
@@ -947,13 +1086,14 @@ class DataManager {
         const ncore = this.getNcore("CONS");
         const yr1c = this.input["GEN"]["Year 1 OTC"] * -1;
         const yr2c = this.input["GEN"]["Year 2 OTC"] * -1;
+        
         for(let year = 0; year < seg[0].length; year++) {
             if(year + this.input["GEN"]["Trade Year"] > this.input["GEN"]["Trade Year"]) {
                 let amount = 0;
                 if(val===1) {
                     amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===1 ? yr1c : 0;
                     amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===2 ? yr2c : 0;
-                    amount += seg[28][year] + cost[8][year] + rev[18][year] + dis[8][year] - ncore[19][year];
+                    amount += seg[28][year] + cost[8][year] + rev[18][year] + dis[8][year] - ncore[19][year] - this.rawdata["SYN"]["Syn"][year]
                 } else if(val===2) {
                     amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===1 ? yr1c : 0;
                     amount += (year + this.input["GEN"]["Trade Year"] - this.input["GEN"]["Trade Year"])===2 ? yr2c : 0;
@@ -979,8 +1119,9 @@ class DataManager {
         for(let i = 0; i < prices.length; i++) {
             const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]);
             const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
-            const fees = this.input["CALC"]['Debt Issurance Fees'] + implied_ev * this.input["GEN"]["Transaction Fees %"] + this.input["GEN"]["Control Fees"];
+            const fees = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + implied_ev * this.input["GEN"]["Transaction Fees %"] + this.input["GEN"]["Control Fees"];
             const price = 0 - implied_ev + nc - kkr - fees;
+
             let x = [price]
             fcfList.forEach((num) => {
                 x.push(num);
@@ -1034,142 +1175,200 @@ class DataManager {
     /// ALL EPS STUFF
 
     getTargetNOPAT = (year) => {
-        return this.rawdata["SEG"]["CONS"][22][year] + this.rawdata["COST"]["CONS"][7][year] +
-            this.rawdata["REV"]["CONS"][12][year] + this.rawdata["DIS"]["CONS"][7][year] - this.rawdata["NCORE"]["CONS"][15][year]
+        const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
+        return (this.rawdata["SEG"]["CONS"][12][year] + this.rawdata["COST"]["CONS"][4][year] +
+            this.rawdata["REV"]["CONS"][5][year] + this.rawdata["DIS"]["CONS"][4][year] - this.rawdata["NCORE"]["CONS"][5][year])*(1-mdlz_tax)
     };
 
-    calcAmort = (price) => {
-        const trans_years = this.input["GEN"]["Transaction Years"];
-        const amort_perc = this.input["GEN"]["Amortization %"];
-        const thing = this.input["GEN"]["Target BV Equity"];
-        const debt_fees = this.input["CALC"]["Debt Issurance Fees"];
-        const target_equity = price * this.input["GEN"]["FDSO at Offer"];
-        return (((target_equity-thing)*amort_perc)/trans_years) + (debt_fees/7);
-    }
-
-    calcInterest = (price, amort, year) => {
-
+    c1 = (price) => {
         const purchase_equity_value = (price*this.input["GEN"]["FDSO at Offer"]);
         const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
         const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
-        const uses = purchase_equity_value + this.input["CALC"]["Total Target Debt"] + this.input["CALC"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-        const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"]
+        const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
+        const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+        const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]      
         const shares_issued = equity_issued/this.input["GEN"]["MDLZ Share Price"];
-
-        const pf_shares = shares_issued + this.input["GEN"]["MDLZ 2025 FDSO"]
-
-        const total_div = pf_shares * this.input["GEN"]["Dividends / Share"];
-        return [this.getCashFlowOperations(year, amort)+this.input["GEN"]["Beginning Cash"] + this.input["GEN"]["Minimum Cash Balance"] - total_div, pf_shares];
+        let pf_shares = shares_issued + this.input["GEN"]["MDLZ 2025 FDSO"]
+        return pf_shares
     }
 
-    getCashFlowOperations = (year, amort) => {
+    c2 = (price, year, tnopat=null) => {
         
+        const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
+
+        const mdlz_ni = this.rawdata["MDLZ"][1][year+6];
+        const target_nopat = tnopat ? tnopat : this.getTargetNOPAT(year+1)
+
+        const tpensions = this.rawdata["TARGET"][0][year+6];
+        const target_pensions_shield = mdlz_tax * tpensions * -1;
+        const target_pension_impact = tpensions + target_pensions_shield;
+
+        const tos = this.rawdata["TARGET"][1][year+6]
+        const target_other_shield = mdlz_tax * tos * -1;
+        const target_other_impact = tos + target_other_shield;
+
+        //need input here?
+        const new_definite = -1 * this.input["GEN"]["Annual Intangible Ammortization"]; 
+        const new_def_shield = mdlz_tax * new_definite * -1;
+        const new_def_impact = new_definite + new_def_shield;
+
+        //need input here?
+        const ppe = 1 * this.input["GEN"]["Annual PP&E Stepup"]; 
+        const ppe_shield = mdlz_tax * ppe * -1;
+        const ppe_impact = ppe + ppe_shield;
+
+        const cash_interest = ((this.input["GEN"]["Beginning Cash"] + this.input["GEN"]["Ending Cash"])/2 - this.rawdata["MDLZ"][18][year+6]) * this.input["GEN"]["Interest Income Rate"];
+
+        const cash_shield = -1 * cash_interest * mdlz_tax;
+        const cash_total = cash_interest+cash_shield;   
+
+        return mdlz_ni+target_nopat+target_pension_impact+target_other_impact+new_def_impact-ppe_impact+cash_total;
+    }
+
+    c3 = (price, year) => {
+        const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
+
         const data = this.rawdata["MDLZ"];
         const tdata = this.rawdata["SEG"]["CONS"];
         const ncdata = this.rawdata["NCORE"]["CONS"];
         const rdata = this.rawdata["REV"]["CONS"];
-
-        const mdlz_da = data[3][year] - data[4][year];
-        const target_da = tdata[14][year+1];
+        
+        const mdlz_da = data[4][year+6]
+        const target_da = tdata[14][year+1] + tdata[16][year+1];
         const nc_da = ncdata[7][year+1]*-1;
         const rev_da = rdata[6][year+1];
 
-        const mdlz_nwc = data[6][year]*-1;
+        //need input here?
+        const new_definite = -1 * this.input['GEN']["Annual Intangible Ammortization"]; ///////////////////////////////
+        const new_def_shield = mdlz_tax * new_definite * -1;
+        const new_def_impact = new_definite + new_def_shield;
+
+        //need input here?
+        const ppe = -1 * this.input["GEN"]["Annual PP&E Stepup"]; ///////////////////////////////
+        const ppe_shield = mdlz_tax * ppe * -1;
+        const ppe_impact = ppe + ppe_shield;
+
+        const amort = -1*(new_def_impact + ppe_impact)
+
+        const mdlz_nwc = data[6][year+6]
         const target_nwc = tdata[26][year+1]*-1;
         const nc_nwc = ncdata[17][year+1]*-1;
         const rev_nwc = rdata[16][year+1]*-1;
+        const nwc_synergies = year===0 ? 287 : year===1 ? 298 : year===2 ? 310 : 0;/////////////////////
 
-        const mdlz_capex = data[7][year];
+        //nwc synergies
+
+        const mdlz_capex = data[7][year+6]
         const target_capex = tdata[24][year+1]*-1;
         const nc_capex = ncdata[15][year+1];
         const rev_capex = rdata[14][year+1]*-1;
-
         let otc = year===0||year===1 ? this.input["GEN"]["OTC"]/2*-1 : 0;
 
-        const oll = data[10][year];
-        const taxes = data[11][year]*-1;
-        const tax_impact = data[12][year];
-        const mdlz_jvs = data[15][year]*-1;
-        const mdlz_jvs_impact = data[16][year];
-        const mdlz_other = data[17][year]*-1;
-        const mdlz_other_impact = data[18][year];
-        const restruct = data[19][year];
-
-        const sbc = 85
-        const pension = -61
+        //need ni to ebit bridge
+        const ni_bridge = data[9][year+6]
+        //need interest
+        const interest = data[10][year+6]
+        //need pension income
+        const pension = data[11][year+6]
+        //need cash taxes
+        const taxes = data[12][year+6]
+        const oll = data[13][year+6]; //
+        //need jvs - which one
+        const jvs = data[14][year+6]
+        //need other - whcih one
+        const other = data[15][year+6]
+        const restruct = data[16][year+6];//
+        const sbc = this.rawdata["TARGET"][2][year+6] || 0
+        const target_pension = this.rawdata["TARGET"][3][year+6] || 0
+        const aaa = this.rawdata["TARGET"][4][year+6] || 0
 
         return mdlz_da+target_da+nc_da+rev_da+mdlz_capex+target_capex+nc_capex+rev_capex+mdlz_nwc+target_nwc
-        +nc_nwc+rev_nwc+otc+oll+taxes+tax_impact+mdlz_jvs+mdlz_jvs_impact+mdlz_other+mdlz_other_impact+restruct+sbc+pension+amort;
+        +nc_nwc+rev_nwc+nwc_synergies+otc+ni_bridge+interest+pension+taxes+oll+jvs+other+restruct+sbc+target_pension+aaa+amort;
     }
 
-    epsStuff = (prices, year, tnopat=null) => {
-        let l1 = [];
-        let l2 = [];
+    c4 = (price, year) => {
+        const be = this.input["GEN"]["Beginning Cash"]
+        const min = this.input["GEN"]["Minimum Cash Balance"];
+        const financing = this.rawdata["MDLZ"][17][year+6]
+        const yoy = year <= 3 ? (1+this.input["GEN"]["Dividend YoY % (first 3 years)"]) : (1+this.input["GEN"]["Dividend YoY %"])
+        const dps = this.input["GEN"]["Dividends / Share"]*(yoy**(year+1));
+        const total_div = this.c1(price) * dps
 
-        const c2 = this.input["GEN"]["MDLZ Debt"] * this.input["GEN"]["MDLZ Debt Rate"]
-        + this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Acquisition Rate"]
+        return be-min+financing-total_div;
+    }
 
-        const currYear = year-this.input["GEN"]["Trade Year"]-1;
-        const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
+    paydown = (price, year) => {
+        let max_rate = 0;
+        let max_rate_year=-1;
 
-        const mdlz_stat_quo_eps = this.rawdata["MDLZ"][0][currYear]
-
-        const mdlz_nopat = this.rawdata["MDLZ"][5][currYear];
-        //const target_nopat = this.rawdata["TARGET"][2][currYear];
-        const target_nopat = tnopat ? tnopat : this.getTargetNOPAT(currYear+1)
-
-        const pensions = this.rawdata["MDLZ"][13][currYear];
-        const mdlz_pensions_shield = mdlz_tax * pensions * -1;
-        const mdlz_pension_impact = pensions + mdlz_pensions_shield;
-
-        const tpensions = this.rawdata["TARGET"][0][currYear];
-        const target_pensions_shield = mdlz_tax * tpensions * -1;
-        const target_pension_impact = tpensions + target_pensions_shield;
-
-        const tos = this.rawdata["TARGET"][1][currYear]
-        const target_other_shield = mdlz_tax * tos * -1;
-        const target_other_impact = tos + target_other_shield;
-
-        const mdlz_non_controlling_interest = this.rawdata["MDLZ"][14][currYear];
-        const mdlz_jvs = this.rawdata["MDLZ"][15][currYear];
-        const mdlz_other = this.rawdata["MDLZ"][17][currYear];
-
-        const cash_interest = ((this.input["GEN"]["Beginning Cash"] + this.input["GEN"]["Ending Cash"])/2) * this.input["GEN"]["Interest Rate"];
-        const cash_shield = -1 * cash_interest * mdlz_tax;
-        const cash_total = cash_interest+cash_shield;
-
-        const trd = this.input["GEN"]["Target Rollover Debt"];
-        const r1 = this.input["GEN"]["Target Rollover Debt Rate"];
-
-        const r2 = this.input["GEN"]["% Interest Deductible"] * mdlz_tax * -1;
-
-        for(let i = 0; i < prices.length; i++) {
-            const amort = this.calcAmort(prices[i]);
-            const amort_shield = mdlz_tax * amort * -1;
-            const mdlz_amort = amort + amort_shield;
-
-            const c3 = mdlz_nopat+target_nopat+mdlz_pension_impact+target_pension_impact+target_other_impact
-            +mdlz_non_controlling_interest+mdlz_jvs+mdlz_other+cash_total-mdlz_amort;
-
-            const things = this.calcInterest(prices[i], amort, currYear);
-
-            const c1 = things[0];
-
-            const pf_shares = things[1];
-            const prni = (c3-(1+r2)*r1*trd + ((1+r2)*r1*c1)/2 - (1+r2)*c2)/(1-((1+r2)*r1)/2)
-            const pro_forma_eps = prni/pf_shares;
-
-            const dif = pro_forma_eps - mdlz_stat_quo_eps;
-            l1.push(dif);
-            l2.push(dif/mdlz_stat_quo_eps);
-            
+        Object.keys(this.debt).forEach((y) => {
+            if(this.debt[y]["Rate"]>max_rate) {
+                max_rate = this.debt[y]["Rate"];
+                max_rate_year = y;
+            }
+        })
+        let interest = 0;
+        Object.keys(this.debt).forEach((y) => {
+            if(year>=y) {
+                interest+=this.debt[y]["Amount"] * this.input["GEN"]['Interest Rate']
+            } else {
+                interest+=this.debt[y]["Amount"] * this.debt[y]["Rate"]
+            }
+        })
+        if(year >= parseInt(max_rate_year)) {
+            interest-=this.debt[max_rate_year]["Amount"] * this.input["GEN"]['Interest Rate']
         }
-        // this.input["AVP"][`${year}E ACC`] = l1
-        // this.input["AVP"][`${year}E DIL`] = l2
-        return [l1, l2]
+        if(year===parseInt(max_rate_year)) {
+            interest+=this.debt[max_rate_year]["Amount"]/2*this.input["GEN"]['Interest Rate']
+        }
+
+        interest+=this.input["GEN"]['Target Short Term Debt'] * this.input["GEN"]['Interest Rate']
+        
+        return [interest,year===parseInt(max_rate_year)?this.debt[max_rate_year]["Amount"]:0]
     }
 
-    // Sensitivity
+    getEps = (prices, year, numyears, tnopat=null) => {    
+        let l = [];
+        const currYear = year-this.input["GEN"]["Trade Year"]-1;
+
+        for(let i = 0; i < numyears; i ++) {
+            l.push([[],[]])
+        }
+
+        const ie_rate = .168
+        for(let i = 0; i < prices.length; i++) {    
+            let debt = this.input["GEN"]["Acquisition Debt"];
+            for(let temp = currYear; temp < numyears; temp++) {
+                const currEps = this.rawdata["MDLZ"][0][temp+6]
+                const c1 = this.c1(prices[i]);
+                const c2 = this.c2(prices[i], temp, tnopat);
+                const c3 = this.c3(prices[i], temp)
+                const c4 = this.c4(prices[i], temp)
+                const paydown = this.paydown(prices[i], temp)
+                const c5 = -1*this.input["GEN"]["Interest Rate"]*(debt*2 - c3 - c4 - paydown[1])/2;
+                const pd = -1*paydown[0];
+                const pds = ie_rate * pd * -1;
+                const ie_impact = pd + pds;
+                const c6 = ie_impact + c2;
+                const c5s = ie_rate * c5 * -1;
+                const c5_impact = c5 + c5s
+                const crazy_rate = (1 - this.input["GEN"]["Interest Rate"]/2 * (1 - ie_rate))
+                const pfni = (c5_impact+c6)/(crazy_rate)
+                const pfeps = pfni/c1;
+                const diff = pfeps - currEps
+                const percent = diff/currEps
+                debt = debt - (pfni+c3+c4)
+                // l1.push(diff)
+                // l2.push(percent)
+                l[temp][0].push(diff)
+                l[temp][1].push(percent)
+            }
+            // l.push([l1, l2])
+        }
+        return l;
+    }
+
+////////////    // Sensitivity
 
     growthSensitivity = (growthRates, prices) => {
         let irrs = []
@@ -1225,7 +1424,6 @@ class DataManager {
         let eps = [];
         // years.forEach((year, index) => {
         //     const realYear = year-this.input["GEN"]["Trade Year"]-1;
-        //     console.log(realYear)
         //     let curr = [];
         //     growthRates.forEach((rate) => {
         //         const data = this.rawdata["SEG"]["CONS"].map(row => [...row]);
@@ -1260,27 +1458,27 @@ class DataManager {
 
     /// INPUT CALCS
 
-    segInputChange = (key) => {
-        const input = this.input["SA"][key];
-        const rev_cagr = input["NRCAGR"];
-        const oi_marg = input["Proj"];
-        const data = this.rawdata["SEG"][key];
+    // segInputChange = (key) => {
+    //     const input = this.input["SA"][key];
+    //     const rev_cagr = input["NRCAGR"];
+    //     const oi_marg = input["Proj"];
+    //     const data = this.rawdata["SEG"][key];
 
-        for(let year = 0; year < data[0].length; year++) {
-            data[0][year] = year===0 ? data[0][year] : data[0][year-1] * (1+rev_cagr);
-            if(year<3) {
-                data[8][year] = data[0][year] * oi_marg[year];
-            } else {
-                data[8][year] = data[8][year-1] * (1+oi_marg[3]);
-            }
-            data[2][year] = data[0][year] * data[3][year];
-            data[4][year] = data[0][year] * data[5][year];
-            data[6][year] = data[0][year] * data[7][year];
-        }
+    //     for(let year = 0; year < data[0].length; year++) {
+    //         data[0][year] = year===0 ? data[0][year] : data[0][year-1] * (1+rev_cagr);
+    //         if(year<3) {
+    //             data[8][year] = data[0][year] * oi_marg[year];
+    //         } else {
+    //             data[8][year] = data[8][year-1] * (1+oi_marg[3]);
+    //         }
+    //         data[2][year] = data[0][year] * data[3][year];
+    //         data[4][year] = data[0][year] * data[5][year];
+    //         data[6][year] = data[0][year] * data[7][year];
+    //     }
 
-        this.rawdata["SEG"][key] = data;
-        this.calcConsolidatedSegment();
-    }
+    //     this.rawdata["SEG"][key] = data;
+    //     this.calcConsolidatedSegment();
+    // }
 
     costInputChange = () => {
         this.calcConsolidatedCost();
@@ -1370,42 +1568,190 @@ class DataManager {
         this.reset();
 
         workbook.SheetNames.forEach(sheetName => {
-          const worksheet = workbook.Sheets[sheetName];
-          const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const worksheet = workbook.Sheets[sheetName];
+            const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       
-          // Check for specific keywords in the sheet name to categorize data
-          if (sheetName.includes('Segment')) {
-            this.addSegmentExcel(sheetData);
-          } else if (sheetName.includes('Cost')) {
-            this.addCostExcel(sheetData)
-          } else if (sheetName.includes('Revenue')) {
-            this.addRevExcel(sheetData)
-          } else if (sheetName.includes('Dis')) {
-            this.addDisExcel(sheetData);
-        } else if (sheetName.includes('Non-Core')) {
-            this.addNcoreExcel(sheetData);
-        } else {
-            console.warn(`Unrecognized sheet name "${sheetName}".`);
-          }
+            // Check for specific keywords in the sheet name to categorize data
+            if (sheetName.includes('#Control')) {
+                this.addControlExcel(sheetData);
+            } else if (sheetName.includes('#MDLZ')) {
+                this.addMDLZExcel(sheetData)
+            } else if (sheetName.includes('#Target')) {
+                this.addTargetExcel(sheetData)
+            } else if (sheetName.includes('#Consol')) {
+                this.addAssumptionsExcel(sheetData)
+            } else if (sheetName.includes('#Seg')) {
+                this.addSegmentExcel(sheetData)
+            } else if (sheetName.includes('#Cost')) {
+                this.addCostExcel(sheetData)
+            } else if (sheetName.includes('#Rev')) {
+                this.addRevExcel(sheetData)
+            } else if (sheetName.includes('#Dis')) {
+                this.addDisExcel(sheetData)
+            } else if (sheetName.includes('#Ncore')) {
+                this.addNcoreExcel(sheetData)
+            } else if (sheetName.includes('#NWC')) {
+                this.addSynExcel(sheetData);
+            } else {
+                console.warn(`Unrecognized sheet name "${sheetName}".`);
+            }
         });
+
+        localStorage.setItem('rawseg', JSON.stringify(this.rawdata["SEG"]));
+        console.log(this.rawdata["SEG"])
+        localStorage.setItem('inputseg', JSON.stringify(this.input["SA"]));
+        localStorage.setItem('rawcost', JSON.stringify(this.rawdata["COST"]));
+        localStorage.setItem('inputcost', JSON.stringify(this.input["COST"]));
+        localStorage.setItem('rawrev', JSON.stringify(this.rawdata["REV"]))
+        localStorage.setItem('inputrev', JSON.stringify(this.input["REV"]));
+        localStorage.setItem('rawdis', JSON.stringify(this.rawdata["DIS"]));
+        localStorage.setItem('inputdis', JSON.stringify(this.input["DIS"]));
+        localStorage.setItem('rawncore', JSON.stringify(this.rawdata["NCORE"]));
+        localStorage.setItem('inputncore', JSON.stringify(this.input["NCORE"]));
+        localStorage.setItem('syn', JSON.stringify(this.rawdata["SYN"]))
       };
+
+      addControlExcel = (data) => {
+        let genData = {} //this.input["GEN"]
+        genData["Purchase Price"] = data[1][1];
+        genData["Standalone Tax Rate"] = data[2][1]
+        genData["MDLZ Tax Rate"] = data[3][1]
+        genData["Interest Income Rate"] = data[4][1]
+        genData["WACC"] = data[5][1]
+        genData["PGR"] = data[6][1]
+        genData["Annual Intangible Ammortization"] = data[7][1]
+        genData["Annual PP&E Stepup"] = data[8][1]
+        genData["Debt Issurance Fees"] = data[9][1]
+        genData["Transaction Fees %"] = data[10][1]
+        genData["Control Fees"] = data[11][1]
+        genData["CAPEX % of NR"] = data[12][1]
+        genData["Minimum Cash Balance"] = data[13][1]
+        genData["Trade Year"] = this.convertDate(data[14][1])
+        genData["Dividend YoY % (first 3 years)"] = data[15][1]
+        genData["Dividend YoY %"] = data[16][1]
+        genData["Interest Tax Rate"] = data[17][1]
+        genData["% Interest Deductible"] = data[18][1]
+        genData["Interest Rate"] = data[19][1]
+        genData["Max leverage"] = data[20][1]
+        genData["Synergy Credit for Leverage"] = data[21][1]
+        genData["Dividends / Share"] = data[22][1]
+        genData["% ∆ in NWC as % ∆ in Revenue"] = data[23][1]
+        genData["OTC"] = data[27][1]
+        genData["Year 1 OTC"] = data[28][1]
+        genData["Year 2 OTC"] = data[29][1]
+        genData["KKR"] = data[30][1]
+        genData["Non-Core Divestiture"] = data[31][1]
+        genData["Target Share Price"] = data[35][1]
+        genData["52-Week High"] = data[36][1]
+        genData["SO"] = data[37][1]
+        genData["FDSO at Offer"] = data[38][1]
+        genData["Target Net Debt"] = data[39][1]
+        genData["Trust % Ownership"] = data[40][1]
+        genData["BV Equity"] = data[41][1]
+        genData["Target Current Cash"] = data[42][1]
+        genData["Target Short Term Debt"] = data[43][1]
+        genData["MDLZ Share Price"] = data[47][1]
+        genData["MDLZ 2025 FDSO"] = data[48][1]
+        genData["Current FDSO"] = data[49][1]
+        genData["2025 MDLZ Debt"] = data[50][1]
+        genData["2025 MDLZ Cash"] = data[51][1]
+        genData["Total FDSO"] = data[55][1]
+        genData["% Cash"] = data[56][1]
+        genData["% Equity"] = data[57][1]
+        genData["Beginning Cash"] = data[58][1]
+        genData["Ending Cash"] = data[59][1]
+
+        this.input["GEN"] = genData
+        localStorage.setItem('gen', JSON.stringify(genData));
+      }
+
+      addMDLZExcel = (data) => {
+        const years = data[0].slice(1);
+        //const startingYear = years[0]; // or parse it as needed
+
+        const raw = this.createEmptyArray(constants.mdlz_labels.length, years.length, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index] = rowData;
+            }
+        });
+
+       this.rawdata["MDLZ"] = raw
+       localStorage.setItem('mdlz', JSON.stringify(raw));
+      }
+
+      addTargetExcel = (data) => {
+        const years = data[0].slice(1);
+        //const startingYear = years[0]; // or parse it as needed
+
+        const raw = this.createEmptyArray(constants.target_labels.length, years.length, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index] = rowData;
+            }
+        });
+
+       this.rawdata["TARGET"] = raw
+       localStorage.setItem('target', JSON.stringify(raw));
+      }
+
+      addAssumptionsExcel = (data) => {
+        const years = data[0].slice(1);
+        //const startingYear = years[0]; // or parse it as needed
+
+        const raw = this.createEmptyArray(constants.assump_labels.length, years.length, 0);
+
+        data.slice(1).forEach((row, index) => {
+            if(row.length>0) {
+                const rowData = row.slice(1);
+                raw[index] = rowData;
+            }
+        });
+
+       this.input["Assumptions"] = raw
+       localStorage.setItem('assumptions', JSON.stringify(raw));
+      }
 
       addSegmentExcel = (data) => {
         const years = data[0].slice(1);
         const startingYear = years[0]; // or parse it as needed
 
+        let raw = []
         this.numSegments++;
-        this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": startingYear};
-        const raw = this.createEmptyArray(constants.seg_labels.length, years.length, 0);
 
-        data.slice(1).forEach((row, index) => {
+        data.forEach((row, index) => {
+            if(index===0) raw = this.createEmptyArray(constants.seg_labels.length, years.length, 0);
+            if(index%16===0) return
             if(row.length>0) {
+                const true_index = index-16*(this.numSegments-1)-1
                 const rowData = row.slice(1);
-                raw[index*2] = rowData;
+                if(true_index < 7) {
+                    raw[true_index*2] = rowData;
+                } else if(true_index < 10) {
+                    raw[true_index+7] = rowData;
+                } else if(true_index < 13) {
+                    raw[true_index+8] = rowData;
+                } else {
+                    let x = [0];
+                    rowData.forEach((num) => {
+                        x.push(num)
+                    })
+                    raw[true_index+9] = x;
+                }
+            } else {
+                this.rawdata["SEG"][this.numSegments] = raw;
+                this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": startingYear};
+                raw = []
+                raw = this.createEmptyArray(constants.seg_labels.length, years.length, 0)
+                this.numSegments++;
             }
         });
-
-        this.rawdata["SEG"][this.numSegments] = raw
+        this.rawdata["SEG"][this.numSegments] = raw;
+        this.input["SA"][this.numSegments]  = {"NRCAGR": 0, "Proj": [0,0,0,0], "startingyear": startingYear};
       }
 
       addCostExcel = (data) => {
@@ -1413,17 +1759,26 @@ class DataManager {
         const startingYear = years[0]; // or parse it as needed
 
         this.numCosts++;
-        this.input["COST"][this.numCosts] = {"startingyear": startingYear}
-        const raw = this.createEmptyArray(constants.cost_labels.length, years.length, 0);
+        //this.input["COST"][this.numCosts] = {"startingyear": startingYear}
+        let raw = []
 
-        data.slice(1).forEach((row, index) => {
+        data.forEach((row, index) => {
+            if(index===0) raw = this.createEmptyArray(constants.cost_labels.length, years.length, 0);
+            if(index%8===0) return
             if(row.length>0) {
+                const true_index = index-8*(this.numCosts-1)-1
                 const rowData = row.slice(1);
-                raw[index] = rowData;
+                raw[true_index] = rowData
+            } else {
+                this.rawdata["COST"][this.numCosts] = raw;
+                this.input["COST"][this.numCosts] = {"startingyear": startingYear}
+                raw = []
+                raw = this.createEmptyArray(constants.cost_labels.length, years.length, 0)
+                this.numCosts++;
             }
         });
-
         this.rawdata["COST"][this.numCosts] = raw;
+        this.input["COST"][this.numCosts] = {"startingyear": startingYear}
       }
 
       addRevExcel = (data) => {
@@ -1431,45 +1786,56 @@ class DataManager {
         const startingYear = years[0]; // or parse it as needed
 
         this.numRevs++;
-        this.input["REV"][this.numRevs] = {"startingyear": startingYear}
-        const raw = this.createEmptyArray(constants.rev_labels.length, this.numYears, 0);
+        let raw = []
 
-        data.slice(1).forEach((row, index) => {
+        data.forEach((row, index) => {
+            if(typeof(row[0]) === 'string' && row[0].includes("Rev Syn")) {
+                this.rawdata["REV"]["Syn"] = row.slice(1)
+            }
+            if(index===0) raw = this.createEmptyArray(constants.rev_labels.length, years.length, 0);
+            if(index%7===0) return
             if(row.length>0) {
-                if(row[0]==="Segment Mapping") {
-                    let segs = [];
-                    const segments = row.slice(1)
-                    segments.forEach((val) => {
-                        segs.push(val);
-                    })
-                    this.mapRev(segs, this.numRevs);
-                }
-                else {
-                    const rowData = row.slice(1);
-                    raw[index*2] = rowData;
-                }
+                const true_index = index-7*(this.numRevs-1)-1
+                const rowData = row.slice(1);
+                raw[true_index*2] = rowData
+            } else {
+                this.rawdata["REV"][this.numRevs] = raw;
+                this.input["REV"][this.numRevs] = {"startingyear": startingYear}
+                raw = []
+                raw = this.createEmptyArray(constants.rev_labels.length, years.length, 0)
+                this.numRevs++;
             }
         });
-
+        console.log(this.rawdata["REV"]["Syn"])
         this.rawdata["REV"][this.numRevs] = raw;
-      };
+        this.input["REV"][this.numRevs] = {"startingyear": startingYear}
+      }
 
       addDisExcel = (data) => {
         const years = data[0].slice(1);
         const startingYear = years[0]; // or parse it as needed
 
         this.numDis++;
-        this.input["DIS"][this.numDis] = {"startingyear": startingYear}
-        const raw = this.createEmptyArray(constants.dis_labels.length, this.numYears, 0);
+        //this.input["COST"][this.numDis] = {"startingyear": startingYear}
+        let raw = []
 
-        data.slice(1).forEach((row, index) => {
+        data.forEach((row, index) => {
+            if(index===0) raw = this.createEmptyArray(constants.dis_labels.length, years.length, 0);
+            if(index%7===0) return
             if(row.length>0) {
+                const true_index = index-7*(this.numDis-1)-1
                 const rowData = row.slice(1);
-                raw[index] = rowData;
+                raw[true_index] = rowData
+            } else {
+                this.rawdata["DIS"][this.numDis] = raw;
+                this.input["DIS"][this.numDis] = {"startingyear": startingYear}
+                raw = []
+                raw = this.createEmptyArray(constants.dis_labels.length, years.length, 0)
+                this.numDis++;
             }
         });
-
         this.rawdata["DIS"][this.numDis] = raw;
+        this.input["DIS"][this.numDis] = {"startingyear": startingYear}
       }
 
       addNcoreExcel = (data) => {
@@ -1477,18 +1843,69 @@ class DataManager {
         const startingYear = years[0]; // or parse it as needed
 
         this.numCore++;
-        this.input["NCORE"][this.numCore] = {"startingyear": startingYear}
-        const raw = this.createEmptyArray(constants.ncore_labels.length, this.numYears, 0);
+        //this.input["COST"][this.numCore] = {"startingyear": startingYear}
+        let raw = []
 
-        data.slice(1).forEach((row, index) => {
+        data.forEach((row, index) => {
+            if(index===0) raw = this.createEmptyArray(constants.ncore_labels.length, years.length, 0);
+            if(index%9===0) return
             if(row.length>0) {
+                const true_index = index-9*(this.numCore-1)-1
                 const rowData = row.slice(1);
-                raw[index*2] = rowData;
+                raw[true_index*2] = rowData
+            } else {
+                this.rawdata["NCORE"][this.numCore] = raw;
+                this.input["NCORE"][this.numCore] = {"startingyear": startingYear}
+                raw = []
+                raw = this.createEmptyArray(constants.ncore_labels.length, years.length, 0)
+                this.numCore++;
             }
         });
-
         this.rawdata["NCORE"][this.numCore] = raw;
-      };
+        this.input["NCORE"][this.numCore] = {"startingyear": startingYear}
+      }
+
+      addSynExcel = (data) => {
+        const years = data[0].slice(1);
+        const startingYear = years[0]; // or parse it as needed
+        
+        this.rawdata["SYN"]["Syn"] = data[2].slice(1);
+        this.rawdata["SYN"]["startingyear"] = startingYear;
+        this.rawdata["SEG"]["Syn"] = {"Syn": Array(this.numYears).fill(0), "startingyear": 0}
+        this.rawdata["SEG"]["Syn"]["Syn"] = data[1].slice(1);
+        this.rawdata["SEG"]["Syn"]["startingyear"] = startingYear;
+      }
+
+      convertDate = (input) => {
+        //const end = parseInt(input)
+        const beg_2024 = 45293 // 1/1/2024
+        // let year = 2024;
+        // let month = 0;
+        // const day_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        // let day = 0;
+
+        // let num = beg_2024
+
+        // while(num < end){
+        //     year+=1
+        //     num += (year-2024)%4===0 ? 366 : 365
+
+        // }
+        // while(num < end) {
+        //     month+=1;
+        //     num += day_month[month] + (year-2024)%4===0 && month===1 ? 1 : 0
+
+        // }
+        // while(num < end) {
+        //     day += 1
+        //     num+=1
+  
+        // }
+
+        // return month + "-" + day + "-" + year
+
+        return parseInt((input - beg_2024)/365)+2024
+      }
 }
 
 const dataManagerInstance = new DataManager();

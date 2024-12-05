@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import PageManager from './components/version2/PageManager';
 import SecurityPage
- from './components/version2/SecurityPage';
+from './components/version2/SecurityPage';
+
+console.clear();
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 

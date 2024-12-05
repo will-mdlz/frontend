@@ -15,7 +15,9 @@ const Revs = () => {
     const handleDataChange = () => {
         const keys = Object.keys(dataManagerInstance.rawdata.REV);
         keys.forEach((segKey) => {
-          if(segKey!=="CONS") dataManagerInstance.calcRev(segKey);
+          if(segKey!=="CONS"&&segKey!=="Syn") {
+            console.log(segKey)
+            dataManagerInstance.calcRev(segKey);}
         });
         dataManagerInstance.calcConsolidatedRev();
         setDataChanged(prev => !prev); // Toggle state to trigger rerender
@@ -47,7 +49,7 @@ const Revs = () => {
     <div>
         <RevCons dataChanged={dataChanged}/>
         {keys.map((segKey) => {
-        if (segKey === "CONS") {
+        if (segKey === "CONS" || segKey === "Syn") {
             return null;  // Skip over "CONS"
         }
         return (

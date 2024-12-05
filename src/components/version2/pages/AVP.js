@@ -7,13 +7,14 @@ import dataManagerInstance from '../DataManagement/Data';
 
 const AVP = () => {
   //const [dataChanged, setDataChanged] = React.useState(false); // State to trigger rerender
-  const [prices, setPrices] = useState([210, 220, 230, 240, 250, 260])
+  const [prices, setPrices] = useState([190, 200, 210, 220, 230, 240])
+  const [numyears, setNumyears] = useState(3)
 
   useEffect(() => {
     dataManagerInstance.calcSynergizedForecast();
     //dataManagerInstance.calcConsolidatedSegment();
-    dataManagerInstance.calcAVP(prices);
-  }, [prices])
+    dataManagerInstance.calcAVP(prices, numyears);
+  }, [prices, numyears])
 
   // const handleDataChange = () => {
   //   const keys = Object.keys(dataManagerInstance.rawdata.SEG);
@@ -36,7 +37,7 @@ const AVP = () => {
           {/* <InputPage1 maxHeight={maxHeight} handleDataChange={handleDataChange}/> */}
         </Grid>
         <Grid item xs={12} >
-          <ReturnsAVP maxHeight={maxHeight} prices={prices} />
+          <ReturnsAVP maxHeight={maxHeight} prices={prices} numyears={numyears}/>
         </Grid>
         {/* SynergizedPNL takes full width below */}
         <Grid item xs={12} paddingTop={1}>
