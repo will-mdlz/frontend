@@ -13,7 +13,7 @@ const Segments = () => {
     const handleDataChange = () => {
         const keys = Object.keys(dataManagerInstance.rawdata.SEG);
         keys.forEach((segKey) => {
-          if(segKey!=="CONS") dataManagerInstance.calcSegment(segKey);
+          if(segKey!=="CONS"&&segKey!=="Syn") dataManagerInstance.calcSegmentCOGS(segKey);
         });
         dataManagerInstance.calcConsolidatedSegment();
         setDataChanged(prev => !prev); // Toggle state to trigger rerender
@@ -49,7 +49,7 @@ const Segments = () => {
     <div>
         <SegCons dataChanged={dataChanged}/>
         {keys.map((segKey) => {
-        if (segKey === "CONS") {
+        if (segKey === "CONS" || segKey === "Syn") {
             return null;  // Skip over "CONS"
         }
         return (

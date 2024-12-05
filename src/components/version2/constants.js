@@ -1,12 +1,13 @@
 
 export const row_labels = [
     "Total Net Revenue", "% Growth", "Gross Profit", "% Margin", "A&C", "% NR", 
-    "SG&A / Corporate Expense", "% NR", "EBIT", "% Margin", "EBITDA", "% Margin"
+    "SG&A / Corporate Expense", "% NR", "OI", "% Margin", "EBITDA", "% Margin"
   ]
 
 export const seg_labels = [
   "Total Net Revenue", "% Growth", "Gross Profit", "% Margin", "A&C", "% NR", 
   "SG&A", "% NR", "EBIT", "% Margin", "D&A", "% NR", "EBITDA", "% Margin",
+  "Vol/Mix","Price","Rest", "COGS", "Cocoa", "Other", "Cocoa GBP/Ton", "YoY Cocoa Costs", "YoY Other Costs"
 ]
 
 export const seg_cons_labels = [
@@ -14,7 +15,8 @@ export const seg_cons_labels = [
   "SG&A", "% NR", "EBIT", "% Margin", "Corporate Expense", "% NR", "Total OI", "% NR", "Segment Depreciation", "% NR",
   "Corporate Depreciation", "% NR", "Total EBITDA", "% Margin", "Income Taxes", "Tax Rate",
   "NOPAT", "Plus: Depcreciation", "Less: Capital Expenditures", "% NR",
-  "Less: Net Working Capital", "% change NR", "Net Available Cash Flow"
+  "Less: Net Working Capital", "% change NR", "Net Available Cash Flow",
+  "Vol/Mix","Price","Rest", "COGS", "Cocoa", "Other"
 ]
 
 export const cost_labels = [
@@ -58,13 +60,34 @@ export const ncore_cons_labels = [
   "% Net Revenue", "Less: Net Working Capital", "% Change NR", "Net Available Cash Flow", 
 ]
 
+// export const mdlz_labels = [
+//   "MDLZ Status Quo EPS", "MDLZ Status Quo Net Income","MDLZ NR", "MDLZ EBITDA", "MDLZ EBIT", "MDLZ NOPAT", "MDLZ Change in NWC", "MDLZ Capex", "MDLZ Total Debt", "MDLZ Cash",
+//   "Operating Lease Liability", "Taxes", "Taxes (cash impact)", "MDLZ Pensions - (tax deductible)",
+//   "MDLZ Non Controlling Interest", "MDLZ JVs", "MDLZ JVs (cash impact)", 
+//   "MDLZ Other", "MDLZ Other (cash impact)", "MDLZ Restructuring", "MDLZ Financing", "MDLZ NI"
+// ]
+
 export const mdlz_labels = [
-  "MDLZ Status Quo EPS", "MDLZ Status Quo Net Income","MDLZ NR", "MDLZ EBITDA", "MDLZ EBIT", "MDLZ NOPAT", "MDLZ Change in NWC", "MDLZ Capex", "MDLZ Total Debt", "MDLZ Cash",
-  "Operating Lease Liability", "Taxes", "Taxes (cash impact)", "MDLZ Pensions - (tax deductible)",
-  "MDLZ Non Controlling Interest", "MDLZ JVs", "MDLZ JVs (cash impact)", 
-  "MDLZ Other", "MDLZ Other (cash impact)", "MDLZ Restructuring"
+  "Status Quo EPS", "Status Quo Net Income","Net Revenue", "EBIT", "D&A", "EBITDA", "Benefit from NWC", "CAPEX", "Total Debt",
+  "NI to OI Bridge", "Interest", "Pension Income", "Cash Taxes", "Operating Lease", "JVs", "Other", "Restructuring",
+  "Financing", "Cash"
 ]
 
+// export const target_labels = [
+//   "Target Pensions - (tax deductible)", "Target Other Income / (Expense) - (tax deductible)", "SBC", "Pension", "AAA initiative cash expense"
+// ]
+
 export const target_labels = [
-  "Target Pensions - (tax deductible)", "Target Other Income / (Expense) - (tax deductible)"
+  "Pensions (Tax Deductible)", "Other Income (Tax Deductible)", "SBC", "Pension", "AAA Initiaitve Cash Expense"
+]
+
+export const assump_labels = [
+  "Corporate Depreciation % of NR", "Corporate Expense % of NR", "Vol/Mix", "Price", "Other"
+]
+
+export const gen_data_rows = [
+  "Purchase Price", "Standlaone Tax Rate", "MDLZ Tax Rate", "Interest Income Rate", "WACC", "PGR", "Annual Intangible Ammortization", 
+  "Annual PP&E Stepup","Debt Issurance Fees", "Transaction Feeds %", "Control Fees", "CAPEX % of NR", "Minimum Cash Balance", 
+  "Trade Year", "Divident YoY % (first 3 years)", "Divident YoY %", "Interest Tax Rate", "% Interest Deductible", "Interest Rate", 
+  "Max leverage", "Synergy Credit for Leverage", "2025 Dividends / Share", "% ∆ in NWC as % ∆ in Revenue", 
 ]

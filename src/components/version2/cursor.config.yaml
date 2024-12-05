@@ -1,0 +1,2 @@
+general:
+  disableHttp2: true 

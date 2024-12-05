@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper} from '@mui/material';
 import dataManagerInstance from '../../../DataManagement/Data';
 import { seg_labels as ROW_LABELS } from '../../../constants';
+import { prettify_dollars, prettify_percent, prettify_gen } from '../../../TableFunctions'
 
 const SegTemplate = ({segKey, handleDataChanged}) => {
     const [data, setData] = useState([]);
@@ -20,9 +21,11 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
     }, [segKey]);
 
     const fadedColor = 'gainsboro'
-  let perc_rows = [1,3,5,7,9,11,13]
-  let dollar_rows = [0,2,8,12]
-  let editable = [0,2,4,6,10]
+  let perc_rows = [1,3,5,7,9,11,13,14,15,16,21,22]
+  let dollar_rows = [0,2,8,12,17]
+  let bot_bord_rows = [13];
+  let cogs = [18,19]
+  let editable = [5,7,11,14,15,20,22]
 
   const generateColumnLabels = (startingYear, numberOfYears) => {
     const labels = [];
@@ -35,40 +38,16 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
   const total_years = dataManagerInstance.rawdata["SEG"][segKey][0].length;
   const COLUMN_LABELS = generateColumnLabels(dataManagerInstance.input["SA"][segKey]['startingyear'], total_years);
 
-  const prettify_dollars = (input) => {
-    if (input < 1000 && input > -1000) {
-      return input > 0 ? "$" + (input*1).toFixed(1) : "$(" + (input*-1).toFixed(1) + ")";
-    } else {
-      let tempStr = input > 0 ? (input*1).toFixed(0) : (input*-1).toFixed(0);
-      if (input < 1000 && input > -1000) { return tempStr }
-      let newStr = "";
-      let count = 0;
-      for(let i = tempStr.length; i > 0; i--) {
-        if(count%3===0 && newStr!=="") {
-          newStr = "," + newStr;
-          count = 0;
-        }
-        newStr = tempStr.substring(i-1, i) + newStr;
-        count++;
-      }
-      return input > 0 ? "$" + newStr : "$(" + newStr + ")";
-    }
-  };
-
-  const prettify_percent = (input) => {
-    return input > 0 ? `${(input*100).toFixed(1)}%` : `(${(input*100*-1).toFixed(1)})%`;
-  };
+  const firstEdit = (row, col) => {
+    return (col===0) && (row===0||row===18||row===19)
+  }
 
   const isEditing = (segment, yearIndex) => {
     return segment===editmode[0] && yearIndex===editmode[1];
   }
 
-  const convertValToDol = (value) => {
-    return parseFloat(value.replace("$", "").replace(",", "").replace("(", "-").replace(")", "")) || 0;
-  }
-
   const handleFocus = (row, col) => (event) => {
-    setOriginalValue(convertValToDol(event.target.value))
+    setOriginalValue(event.target.value)
     setEditMode([row, col]);
   }
 
@@ -78,15 +57,14 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
 
   const handleBlur = (row, col) => (event) => {
     const currVal = event.target.value;
-    if(currVal==="") {
-      data[row][col] = originalValue;
-    } else {
-      data[row][col] = currVal==="0" ? 0 : parseFloat(currVal) || originalValue;
-      // Update things
-      dataManagerInstance.calcSegment(segKey)
-      setVal('');
+    if(currVal!=="") {
+      dataManagerInstance.rawdata["SEG"][segKey][row][col] = (perc_rows.includes(row) ? parseFloat(currVal) / 100 : parseFloat(currVal)) || originalValue
+      dataManagerInstance.calcSegmentCOGS(segKey)
+      setData([...dataManagerInstance.getSegment(segKey)])
       handleDataChanged();
     }
+    setVal('');
+    setOriginalValue("");
     setEditMode([])
   }
 
@@ -149,6 +127,8 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
             const perc_row = perc_rows.includes(rowIndex);
             const dollar_row = dollar_rows.includes(rowIndex);
             const indentStyle = (perc_row) ? { paddingLeft: '20px', fontSize: 12, } : dollar_row ? dollarStyle : {};
+            const bot = bot_bord_rows.includes(rowIndex)
+            const cog = cogs.includes(rowIndex)
             return (
             <TableRow
               key={rowIndex}
@@ -160,16 +140,16 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
                 align="left"
                 padding="none"
                 key={row.id}
-                style={{ ...rowLabelStyle, ...indentStyle }}
+                style={cog ? {...rowLabelStyle, paddingLeft: '20px', fontSize: 12,} : bot ? { ...rowLabelStyle, ...indentStyle, borderBottom: "2px solid black" } : { ...rowLabelStyle, ...indentStyle }}
               >
                 {ROW_LABELS[rowIndex]} 
               </TableCell>
               {row.map((cellValue, cellIndex) => {
                 if (cellIndex >= total_years) return null;
-                return editable.includes(rowIndex) ? 
+                return editable.includes(rowIndex) || firstEdit(rowIndex, cellIndex) ? 
                 <TableCell style={labelStyle} key={cellIndex}>
                       <TextField
-                            value={isEditing(rowIndex, cellIndex) ? val : prettify_dollars(cellValue) + " "}
+                            value={isEditing(rowIndex, cellIndex) ? val : perc_row ? prettify_percent(cellValue) : prettify_dollars(cellValue) + " "}
                             onFocus={handleFocus(rowIndex, cellIndex)}
                             onChange={handleInputChange(rowIndex, cellIndex)}
                             onBlur={handleBlur(rowIndex, cellIndex)}
@@ -196,9 +176,9 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
                   key={cellIndex}
                   align="right"
                   padding="none"
-                  style={perc_row ? percStyle : dollar_row ? dollarStyle : {}}
+                  style={bot ? {...percStyle, borderBottom: "2px solid black"} : perc_row ? percStyle : dollar_row ? dollarStyle : {fontSize: 12}}
                   >
-                  {dollar_row ? prettify_dollars(cellValue) : perc_row ? prettify_percent(cellValue) : (cellValue*1).toFixed(1)}
+                  {dollar_row ? prettify_dollars(cellValue) : perc_row ? prettify_percent(cellValue) : prettify_gen(cellValue)}
                 </TableCell>
                 );
               })}

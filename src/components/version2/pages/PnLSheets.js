@@ -28,7 +28,7 @@ const PnLSheets = () => {
   const updateSegments = () => {
     const keys = Object.keys(dataManagerInstance.rawdata.SEG);
     keys.forEach((segKey) => {
-      if(segKey!=="CONS") dataManagerInstance.calcSegment2(segKey);
+      if(segKey!=="CONS") dataManagerInstance.calcSegmentCOGS(segKey);
     });
     dataManagerInstance.calcConsolidatedSegment();
   }

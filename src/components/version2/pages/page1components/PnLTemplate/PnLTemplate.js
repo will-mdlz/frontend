@@ -34,7 +34,7 @@ const PnLTemplate = ({val}) => {
     let row_labels = [];
     if(val===0) {
         Object.keys(dataManagerInstance.rawdata.SEG).forEach((key) => {
-            if(key!=="CONS") {
+            if(key!=="CONS"&&key!=="Syn") {
                 row_labels.push(`Segment ${key}`);
                 num_before++;
             }

@@ -28,9 +28,10 @@ const MDLZTargetPnL = ({val}) => {
     return labels;
   };
 
-  const total_years = dataManagerInstance.numYears;
-  const startingYear = dataManagerInstance.startYear+1;
-  const COLUMN_LABELS = generateColumnLabels(startingYear, total_years-1);
+  const total_years = dataManagerInstance.rawdata["MDLZ"][0].length;
+  //const startingYear = dataManagerInstance.input["Gen"]["Trade Year"]+1;
+  const startingYear = 2020
+  const COLUMN_LABELS = generateColumnLabels(startingYear, total_years);
   const ROW_LABELS = val===1 ? mdlz_labels : target_labels;
 
   const handleFocus = (row, col) => (event) => {
