@@ -39,7 +39,7 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
   const COLUMN_LABELS = generateColumnLabels(dataManagerInstance.input["SA"][segKey]['startingyear'], total_years);
 
   const firstEdit = (row, col) => {
-    return (col===0) && (row===0||row===18||row===19)
+    return (col===dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear']) && (row===0||row===18||row===19)
   }
 
   const isEditing = (segment, yearIndex) => {
@@ -146,7 +146,7 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
               </TableCell>
               {row.map((cellValue, cellIndex) => {
                 if (cellIndex >= total_years) return null;
-                return editable.includes(rowIndex) || firstEdit(rowIndex, cellIndex) ? 
+                return (editable.includes(rowIndex) || firstEdit(rowIndex, cellIndex)) && cellIndex >= dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear'] ? 
                 <TableCell style={labelStyle} key={cellIndex}>
                       <TextField
                             value={isEditing(rowIndex, cellIndex) ? val : perc_row ? prettify_percent(cellValue) : prettify_dollars(cellValue) + " "}

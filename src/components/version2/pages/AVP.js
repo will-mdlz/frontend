@@ -6,28 +6,15 @@ import SynergizedPNL from './page1components/SynergizedPNL';
 import dataManagerInstance from '../DataManagement/Data';
 
 const AVP = () => {
-  //const [dataChanged, setDataChanged] = React.useState(false); // State to trigger rerender
   const [prices, setPrices] = useState([190, 200, 210, 220, 230, 240])
-  const [numyears, setNumyears] = useState(3)
+  const [numyears, setNumyears] = useState(5)
 
   useEffect(() => {
     dataManagerInstance.calcSynergizedForecast();
-    //dataManagerInstance.calcConsolidatedSegment();
     dataManagerInstance.calcAVP(prices, numyears);
   }, [prices, numyears])
 
-  // const handleDataChange = () => {
-  //   const keys = Object.keys(dataManagerInstance.rawdata.SEG);
-  //   keys.forEach((segKey) => {
-  //     if(segKey!=="CONS") dataManagerInstance.calcSegment2(segKey);
-  //   });
-  //   dataManagerInstance.calcConsolidatedSegment();
-  //   setDataChanged(prev => !prev); // Toggle state to trigger rerender
-  // };
-
-  //const prices = [210, 220, 230, 240, 250, 260]
-
-  const maxHeight = 680;
+  const maxHeight = 800;
 
   return (
     <div>

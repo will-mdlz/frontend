@@ -28,7 +28,7 @@ const PnLSheets = () => {
   const updateSegments = () => {
     const keys = Object.keys(dataManagerInstance.rawdata.SEG);
     keys.forEach((segKey) => {
-      if(segKey!=="CONS") dataManagerInstance.calcSegmentCOGS(segKey);
+      if(segKey!=="CONS"&&segKey!=="Syn") dataManagerInstance.calcSegmentCOGS(segKey);
     });
     dataManagerInstance.calcConsolidatedSegment();
   }
@@ -44,7 +44,7 @@ const PnLSheets = () => {
   const updateRevs = () => {
     const keys = Object.keys(dataManagerInstance.rawdata.REV);
     keys.forEach((segKey) => {
-      if(segKey!=="CONS") dataManagerInstance.calcRev(segKey);
+      if(segKey!=="CONS" && segKey!=="Syn") dataManagerInstance.calcRev(segKey);
     });
     dataManagerInstance.calcConsolidatedRev();
   }

@@ -17,7 +17,7 @@ const SegCons = ({dataChanged}) => {
         const keys = Object.keys(dataManagerInstance.rawdata.SEG);
         keys.forEach((num) => {
             //if(num!=="CONS") dataManagerInstance.calcSegment2(num);
-            if(num!=="Syn") dataManagerInstance.calcSegmentCOGS(num);
+            if(num!=="CONS"&&num!=="Syn") dataManagerInstance.calcSegmentCOGS(num);
         })
         dataManagerInstance.calcConsolidatedSegment();
         const combinedData = dataManagerInstance.getSegment("CONS");

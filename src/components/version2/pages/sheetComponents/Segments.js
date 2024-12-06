@@ -24,7 +24,7 @@ const Segments = () => {
 
     const addSegTemplate = () => {
         dataManagerInstance.addSegment();
-        dataManagerInstance.calcConsolidatedSegment();
+        //dataManagerInstance.calcConsolidatedSegment();
         setKeys(Object.keys(dataManagerInstance.rawdata.SEG));
     }
 

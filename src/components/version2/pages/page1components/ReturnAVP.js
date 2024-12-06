@@ -6,16 +6,22 @@ import dataManagerInstance from '../../DataManagement/Data';
 
 const ReturnAVP = ({maxHeight, prices, numyears}) => {
   const [input, setInput] = useState(dataManagerInstance.input["AVP"])
+  const [map, setMap] = useState([])
 
   useEffect(() => {
     dataManagerInstance.updateAll();
-    dataManagerInstance.calcAVP(prices, numyears);
+    //dataManagerInstance.calcAVP(prices, numyears);
     const data = dataManagerInstance.input["AVP"];
+    let map = [];
+    for(let i = 1; i < numyears + 1; i++) {
+      map.push(i)
+    }
+    setMap(map);
     setInput(data)
   }, [prices, numyears])
 
-  dataManagerInstance.updateAll();
-  dataManagerInstance.calcAVP(prices, numyears);
+  //dataManagerInstance.updateAll();
+  //dataManagerInstance.calcAVP(prices, numyears);
   const borderColor = '#4F2170';
   const fadedColor = 'gainsboro'
 
@@ -173,7 +179,7 @@ const ReturnAVP = ({maxHeight, prices, numyears}) => {
 
               {createDivider(9)}
 
-              <TableRow>
+              {/* <TableRow>
                 <TableCell size='small' rowSpan={3} align='center' width={100} style={{color: 'white', backgroundColor:borderColor}}>Accretion / (Dilution)</TableCell>
                 <TableCell size='small' style={labelStyleGray}>2026E</TableCell>
                 <TableCell size='small' style={{backgroundColor: fadedColor}}></TableCell>
@@ -200,7 +206,20 @@ const ReturnAVP = ({maxHeight, prices, numyears}) => {
                       {prettify_dollars_acc(cashValue)} / {prettify_percent(input["Year 3 DIL"][index])}
                     </TableCell>
                   ))}
+              </TableRow> */}
+
+              {map.map((year, index_map) => (
+                <TableRow key={index_map}>
+                {index_map===0 ? <TableCell size='small' rowSpan={numyears} align='center' width={100} style={{color: 'white', backgroundColor:borderColor}}>Accretion / (Dilution)</TableCell> : null}
+                  <TableCell size='small' style={index_map%2===0 ? labelStyleGray : labelStyle}>{`${dataManagerInstance.input["GEN"]["Trade Year"] + year}E`}</TableCell>
+                    <TableCell size='small' style={index_map%2===0 ? {backgroundColor: fadedColor} : {}}></TableCell>
+                      { input[`Year ${year} ACC`].map((cashValue, index) => (
+                    <TableCell key={index} size="small" align='center' style={index_map%2===0 ? {backgroundColor: fadedColor, fontSize: 12} : {fontSize: 12}}>
+                      {prettify_dollars_acc(cashValue)} / {prettify_percent(input[`Year ${year} DIL`][index])}
+                    </TableCell>
+                  ))}
               </TableRow>
+              ))}
 
               {createDivider(9)}
 

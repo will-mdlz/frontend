@@ -28,7 +28,6 @@ class DataManager {
         this.input["DIS"] = this.initInputDis();
         this.input["NCORE"] = this.initInputNcore();
         this.input["GEN"] = this.initGen();
-        this.input["CALC"] = this.initCalc();
         this.input["AVP"] = this.initAVP();
         this.input["Assumptions"] = this.initAssupmtions();
     };
@@ -375,19 +374,11 @@ class DataManager {
                 "Synergy Credit for Leverage": 0, "Dividends / Share": 0, "% ∆ in NWC as % ∆ in Revenue": 0, "OTC": 0, "Year 1 OTC": 0,
                 "Year 2 OTC": 0, "KKR": 0, "Non-Core Divestiture": 0, "Target Share Price": 0, "52-Week High": 0, "SO": 0, "FDSO at Offer": 0,
                 "Target Net Debt": 0, "Trust % Ownership": 0, "BV Equity": 0, "Target Current Cash": 0, "Target Short Term Debt": 0, "MDLZ Share Price": 0,
-                "MDLZ 2025 FDSO": 0, "Current FDSO": 0, "2025 MDLZ Debt": 0, "2025 MDLZ Cash": 0, "Total FDSO": 0, "% Cash": 0, "% Equity": 0, "Beginning Cash": 0, "Ending Cash": 0
+                "MDLZ 2025 FDSO": 0, "Current FDSO": 0, "2025 MDLZ Debt": 0, "Total FDSO": 0, "% Cash": 0, "% Equity": 0, "Beginning Cash": 0, "Ending Cash": 0
             }
         } else {
             const parsedGen = JSON.parse(storedGen);
             return parsedGen;
-        }
-    }
-
-    initCalc = () => {
-        return {
-            "Total Target Debt": this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"],
-            "Debt Issurance Fees": this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"],
-            "Source wo Equity": this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Non-Core Divestiture"],
         }
     }
 
@@ -429,7 +420,7 @@ class DataManager {
             this.input["AVP"][`Year ${i} DIL`] = eps_new[i-1][1]
         }
 
-        console.log(this.input["AVP"])
+        //console.log(this.input["AVP"])
     }
 
     calcAcquDebt = () => {
@@ -440,8 +431,8 @@ class DataManager {
         const non_core = this.rawdata["NCORE"]["CONS"][9][0];
         const ebitda = mdlz_ebitda+target_ebitda+syn_mult
         const sub_core = ebitda-non_core
-        const tnd = this.input["GEN"]["2025 MDLZ Debt"] - this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Net Debt"]
-        const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+        const tnd = this.input["GEN"]["2025 MDLZ Debt"] - this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Net Debt"]
+        const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
         const bull_tnd = tnd + bull_cash
         const lvg = bull_tnd/sub_core
         const inc_lev = this.input["GEN"]["Max leverage"] - lvg;
@@ -509,14 +500,20 @@ class DataManager {
             const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
             const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
             const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-            const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
-            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
+            const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
             
             const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"] + bull_cash + this.input["GEN"]["Minimum Cash Balance"];
             const val2 = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
             const cash_issued = val1 - val2;
 
             const total = equity_issued + cash_issued;
+            
+//             1 42740.0406417
+//             2 47415.390641699996
+// Data.js:524 3 189.6615625668
+// Data.js:525 4 50739.0643919525
+// Data.js:526 5 329.9707131267869
 
             //fucking end me if I have to redo this again
 
@@ -540,8 +537,8 @@ class DataManager {
             const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
             const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
             const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-            const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
-            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]            
+            const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]            
 
             const shares_issued = equity_issued/this.input["GEN"]["MDLZ Share Price"];
 
@@ -625,10 +622,6 @@ class DataManager {
     };
 
     // ### Seg calculations
-
-    initalExtraCalc = () => {
-        
-    }
 
     calcSegmentCOGS = (key) => {
         const data = this.rawdata["SEG"][key];
@@ -1031,7 +1024,7 @@ class DataManager {
     }
 
     calcSynergizedForecast = () => {
-        this.calcConsolidatedSegment();
+        //this.calcConsolidatedSegment();
         this.calcConsolidatedCost();
         this.calcConsolidatedRev();
         this.calcConsolidatedDis();
@@ -1185,8 +1178,8 @@ class DataManager {
         const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
         const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
         const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-        const bull_cash = this.input["GEN"]["2025 MDLZ Cash"] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
-        const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - this.input["CALC"]["Total Target Debt"] - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]      
+        const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+        const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]      
         const shares_issued = equity_issued/this.input["GEN"]["MDLZ Share Price"];
         let pf_shares = shares_issued + this.input["GEN"]["MDLZ 2025 FDSO"]
         return pf_shares
@@ -1335,7 +1328,7 @@ class DataManager {
             l.push([[],[]])
         }
 
-        const ie_rate = .168
+        const ie_rate = this.input["GEN"]["Interest Tax Rate"]
         for(let i = 0; i < prices.length; i++) {    
             let debt = this.input["GEN"]["Acquisition Debt"];
             for(let temp = currYear; temp < numyears; temp++) {
@@ -1564,7 +1557,7 @@ class DataManager {
 
       handleExcelUpload = (binaryStr) => {
         const workbook = XLSX.read(binaryStr, { type: 'binary' });
-      
+        localStorage.clear()
         this.reset();
 
         workbook.SheetNames.forEach(sheetName => {
@@ -1598,7 +1591,6 @@ class DataManager {
         });
 
         localStorage.setItem('rawseg', JSON.stringify(this.rawdata["SEG"]));
-        console.log(this.rawdata["SEG"])
         localStorage.setItem('inputseg', JSON.stringify(this.input["SA"]));
         localStorage.setItem('rawcost', JSON.stringify(this.rawdata["COST"]));
         localStorage.setItem('inputcost', JSON.stringify(this.input["COST"]));
@@ -1654,12 +1646,11 @@ class DataManager {
         genData["MDLZ 2025 FDSO"] = data[48][1]
         genData["Current FDSO"] = data[49][1]
         genData["2025 MDLZ Debt"] = data[50][1]
-        genData["2025 MDLZ Cash"] = data[51][1]
-        genData["Total FDSO"] = data[55][1]
-        genData["% Cash"] = data[56][1]
-        genData["% Equity"] = data[57][1]
-        genData["Beginning Cash"] = data[58][1]
-        genData["Ending Cash"] = data[59][1]
+        genData["Total FDSO"] = data[54][1]
+        genData["% Cash"] = data[55][1]
+        genData["% Equity"] = data[56][1]
+        genData["Beginning Cash"] = data[57][1]
+        genData["Ending Cash"] = data[58][1]
 
         this.input["GEN"] = genData
         localStorage.setItem('gen', JSON.stringify(genData));
@@ -1791,6 +1782,7 @@ class DataManager {
         data.forEach((row, index) => {
             if(typeof(row[0]) === 'string' && row[0].includes("Rev Syn")) {
                 this.rawdata["REV"]["Syn"] = row.slice(1)
+                return
             }
             if(index===0) raw = this.createEmptyArray(constants.rev_labels.length, years.length, 0);
             if(index%7===0) return
@@ -1806,9 +1798,8 @@ class DataManager {
                 this.numRevs++;
             }
         });
-        console.log(this.rawdata["REV"]["Syn"])
-        this.rawdata["REV"][this.numRevs] = raw;
-        this.input["REV"][this.numRevs] = {"startingyear": startingYear}
+        // this.rawdata["REV"][this.numRevs] = raw;
+        // this.input["REV"][this.numRevs] = {"startingyear": startingYear}
       }
 
       addDisExcel = (data) => {

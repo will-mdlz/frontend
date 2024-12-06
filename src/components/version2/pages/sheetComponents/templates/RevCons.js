@@ -12,6 +12,7 @@ const RevCons = ({dataChanged}) => {
       //if(!hasCombinedData.current) {
         const keys = Object.keys(dataManagerInstance.rawdata.REV);
         keys.forEach((num) => {
+          if(num!=="CONS"&&num!=="Syn")
             dataManagerInstance.calcRev(num);
         })
         dataManagerInstance.calcConsolidatedRev();

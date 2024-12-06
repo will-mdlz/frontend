@@ -15,7 +15,7 @@ const Dis = () => {
     const handleDataChange = () => {
         const keys = Object.keys(dataManagerInstance.rawdata.DIS);
         keys.forEach((segKey) => {
-          if(segKey!=="CONS") dataManagerInstance.calcRev(segKey);
+          if(segKey!=="CONS" && segKey!=="Syn") dataManagerInstance.calcDis(segKey);
         });
         dataManagerInstance.calcConsolidatedDis();
         setDataChanged(prev => !prev); // Toggle state to trigger rerender

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { TextField, Typography, Box, Button, Grid, Divider } from '@mui/material';
 import dataManagerInstance from '../DataManagement/Data';
+import { prettify_dollars, prettify_percent, convertValToDol, convertValToPerc, prettify_gen } from '../TableFunctions';
 
 const GenInput = () => {
   // Initialize local state with the AVP data
@@ -12,8 +13,8 @@ const GenInput = () => {
   const [val, setVal] = useState('')
   const [editmode, setEditMode] = useState([])
 
-  let percents = [0,1,2,3,4,10,11,12,14,18,21,23,25,35,36,39,40]
-  let dollars = [5,6,7,8,9,13,15,16,19,20,22,24,26,27,28,29,30,31,32,33,34,37,38,41,42]
+  const percents = [1,2,3,4,5,8,9,11,14,15,16,17,18,20,22,33,42,43]
+  const dollars = [0,6,7,10,12,21,23,24,25,26,27,28,29,30,31,32,34,35,36,37,40,44,45,46]
 
 
   const handleFileUpload = (event) => {
@@ -23,38 +24,6 @@ const GenInput = () => {
       dataManagerInstance.handleFileUpload(event); // Call your existing upload handler
     }
   };
-
-  const prettify_dollars = (input) => {
-if (input < 1000 && input > -1000) {
-      return input > 0 ? "$" + (input*1).toFixed(2) : "$(" + (input*-1).toFixed(2) + ")";
-    } else {
-      let tempStr = input > 0 ? (input*1).toFixed(0) : (input*-1).toFixed(0);
-      if (input < 1000 && input > -1000) { return tempStr }
-      let newStr = "";
-      let count = 0;
-      for(let i = tempStr.length; i > 0; i--) {
-        if(count%3===0 && newStr!=="") {
-          newStr = "," + newStr;
-          count = 0;
-        }
-        newStr = tempStr.substring(i-1, i) + newStr;
-        count++;
-      }
-      return input > 0 ? "$" + newStr : "$(" + newStr + ")";
-    }
-  };
-
-  const prettify_percent = (input) => {
-    return input > 0 ? `${(input*100).toFixed(1)}%` : `(${(input*100*-1).toFixed(1)})%`;
-  };
-
-  const convertValToDol = (value) => {
-    return parseFloat(value.replace("$", "").replace(",", "").replace("(", "-").replace(")", "")) || 0;
-  }
-
-  const convertValToPerc = (value) => {
-    return parseFloat(value.replace('%', '')) / 100 || 0;
-  }
 
   const isEditing = (table, key) => {
     return table===editmode[0] && key===editmode[1];
@@ -251,7 +220,7 @@ if (input < 1000 && input > -1000) {
             ? prettify_percent(genData[key])
             : isDollar
             ? prettify_dollars(genData[key])
-            : genData[key];
+            : prettify_gen(genData[key]);
 
           return (
             <Grid item xs={12} sm={4} key={key} sx={{ display: 'flex', alignItems: 'center' }}>

@@ -12,9 +12,6 @@ const PageManager = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentPage, setCurrentPage] = useState('Page1');  // Default to Page1
 
-  dataManagerInstance.initialCalc();
-  dataManagerInstance.calcConsolidatedSegment();
-
   const pages = {
     Page1: <AVP />,
     Page2: <Sensitivities />,
