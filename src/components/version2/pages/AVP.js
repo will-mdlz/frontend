@@ -10,6 +10,7 @@ const AVP = () => {
   const [numyears, setNumyears] = useState(5)
 
   useEffect(() => {
+    dataManagerInstance.initialCalc();
     dataManagerInstance.calcSynergizedForecast();
     dataManagerInstance.calcAVP(prices, numyears);
   }, [prices, numyears])

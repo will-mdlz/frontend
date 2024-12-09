@@ -406,7 +406,7 @@ class DataManager {
 
         this.storeIRRs(prices);
 
-        const eps_new = this.getEps(prices,2026, numyears)
+        const eps_new = this.getEps(prices,2026,numyears)
 
         // this.input["AVP"]["Year 1 ACC"] = eps_new[0][0]
         // this.input["AVP"]["Year 1 DIL"] = eps_new[0][1]
@@ -436,6 +436,7 @@ class DataManager {
         const bull_tnd = tnd + bull_cash
         const lvg = bull_tnd/sub_core
         const inc_lev = this.input["GEN"]["Max leverage"] - lvg;
+
         return inc_lev * sub_core
     }
 
@@ -496,13 +497,15 @@ class DataManager {
         let l1 = [];
         let l2 = [];
         for(let i = 0; i < prices.length; i++) {
-            const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]);
-            const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
-            const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"];
-            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
-            const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"]
+            const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]); // no change
+            const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"]; //no change
+            const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"]; // no change
+            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"]; //no change
+            const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"] //no change
             const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
             
+            if(prices[i]===210) console.log(this.rawdata["MDLZ"][18][6])
+
             const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"] + bull_cash + this.input["GEN"]["Minimum Cash Balance"];
             const val2 = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
             const cash_issued = val1 - val2;
@@ -625,6 +628,7 @@ class DataManager {
 
     calcSegmentCOGS = (key) => {
         const data = this.rawdata["SEG"][key];
+        const yeardiff = this.input["GEN"]["Trade Year"] - this.input["SA"][key]["startingyear"]
         if(data) {
             for(let year = 0; year < data[0].length; year++) {
                 // data[8][year] = data[2][year] - data[4][year] - data[6][year];
@@ -636,9 +640,30 @@ class DataManager {
                 data[0][year] = year===0 ? data[0][year] : data[0][year-1] * (1+(data[14][year] + data[15][year]+data[16][year]));
                 data[1][year] = year===0 ? 0 : (data[0][year] / data[0][year-1]) - 1
 
-                data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
-                data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
+                // if(year<=yeardiff) {
+                //     data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
+                //     data[19][year] = data[19][year]
+                // } else {
+                //     data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
+                //     data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
+                //     if(key==="3") console.log(year, data[18][year])
+                // }
 
+                if(key==="2") {
+                    if(year<yeardiff-1){
+                        data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]+data[14][year]) //other
+                    } else if(year===yeardiff-1) {
+                        data[19][year] = data[19][year-1] * (1 - 0.00569)
+                    } else {
+                        data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
+                    }
+                } else {
+                    const rate = year === data[0].length-1 ? 1+data[22][year] : 1+data[22][year+1]
+                    data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(rate) //other
+                }
+
+                data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
+                //data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
                 data[17][year] = data[18][year] + data[19][year]
                 data[21][year] = year===0 ? 0 : data[20][year]/data[20][year-1] -1
 
@@ -711,9 +736,9 @@ class DataManager {
                         [29,30].forEach((num) => {
                             data[num][year] += year===0 ? 0 : parseFloat(seg[num-15][year]*seg[0][year-1])
                         });
-                        data[32][year] += seg[17][year]
-                        data[33][year] += seg[18][year]
-                        data[34][year] += seg[19][year]
+                        data[32][year] += seg[17][year+yearDif]
+                        data[33][year] += seg[18][year+yearDif]
+                        data[34][year] += seg[19][year+yearDif]
                     }
                 } else {
                     const offset = yearDif * -1;
@@ -1024,7 +1049,7 @@ class DataManager {
     }
 
     calcSynergizedForecast = () => {
-        //this.calcConsolidatedSegment();
+        this.calcConsolidatedSegment();
         this.calcConsolidatedCost();
         this.calcConsolidatedRev();
         this.calcConsolidatedDis();
@@ -1713,7 +1738,6 @@ class DataManager {
 
         let raw = []
         this.numSegments++;
-
         data.forEach((row, index) => {
             if(index===0) raw = this.createEmptyArray(constants.seg_labels.length, years.length, 0);
             if(index%16===0) return

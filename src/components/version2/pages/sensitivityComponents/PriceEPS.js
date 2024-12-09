@@ -4,8 +4,8 @@ import dataManagerInstance from '../../DataManagement/Data';
 
 const PriceEPS = () => {
     // Set up state for the three inputs with default values
-    const [startPrice, setStartPrice] = useState(210);
-    const [endPrice, setEndPrice] = useState(260);
+    const [startPrice, setStartPrice] = useState(190);
+    const [endPrice, setEndPrice] = useState(240);
     const [interval, setInterval] = useState(10);
     const [prices, setPrices] = useState([])
     const [year, setYear] = useState(2026)
@@ -26,9 +26,9 @@ const PriceEPS = () => {
     }, [startPrice, endPrice, interval]);
 
     // Calculate the range of prices
-    const eps = dataManagerInstance.epsStuff(prices, year);
-    const eps1 = eps[0]
-    const eps2 = eps[1]
+    const eps = dataManagerInstance.getEps(prices, 2026, year-2026+1);
+    const eps1 = eps[year-2026][0]
+    const eps2 = eps[year-2026][1]
 
     const onYearChange = (event) => {
         const newYear = event.target.value;
@@ -36,6 +36,7 @@ const PriceEPS = () => {
     }
 
     const convertEps = (input) => {
+        console.log(input)
         if(input<0) {
             return "$(" + (input*-1).toFixed(3)+")";
         }
