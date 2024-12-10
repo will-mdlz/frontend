@@ -6,13 +6,13 @@ export const row_labels = [
 
 export const seg_labels = [
   "Total Net Revenue", "% Growth", "Gross Profit", "% Margin", "A&C", "% NR", 
-  "SG&A", "% NR", "EBIT", "% Margin", "D&A", "% NR", "EBITDA", "% Margin",
+  "SG&A", "% NR", "Segment EBIT", "% Margin", "D&A", "% NR", "Segment EBITDA", "% Margin",
   "Vol/Mix","Price","Rest", "COGS", "Cocoa", "Other", "Cocoa GBP/Ton", "YoY Cocoa Costs", "YoY Other Costs"
 ]
 
 export const seg_cons_labels = [
   "Total Net Revenue", "% Growth", "Gross Profit", "% Margin", "A&C", "% NR", 
-  "SG&A", "% NR", "EBIT", "% Margin", "Corporate Expense", "% NR", "Total OI", "% NR", "Segment Depreciation", "% NR",
+  "SG&A", "% NR", "Segment EBIT", "% Margin", "Corporate Expense", "% NR", "Total OI", "% NR", "Segment Depreciation", "% NR",
   "Corporate Depreciation", "% NR", "Total EBITDA", "% Margin", "Income Taxes", "Tax Rate",
   "NOPAT", "Plus: Depcreciation", "Less: Capital Expenditures", "% NR",
   "Less: Net Working Capital", "% change NR", "Net Available Cash Flow",

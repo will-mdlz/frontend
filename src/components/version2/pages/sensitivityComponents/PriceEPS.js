@@ -36,7 +36,6 @@ const PriceEPS = () => {
     }
 
     const convertEps = (input) => {
-        console.log(input)
         if(input<0) {
             return "$(" + (input*-1).toFixed(3)+")";
         }
@@ -127,7 +126,7 @@ const PriceEPS = () => {
                     <TableBody>
                         <TableRow hover>
                             <TableCell component="th" scope="row">
-                                ACC
+                                $
                             </TableCell>
                             {prices.map((price, index) => (
                                 <TableCell key={index} align="center">
@@ -139,7 +138,7 @@ const PriceEPS = () => {
                         </TableRow>
                         <TableRow hover>
                             <TableCell component="th" scope="row">
-                                DIL
+                                %
                             </TableCell>
                             {prices.map((price, index) => (
                                 <TableCell key={index} align="center">

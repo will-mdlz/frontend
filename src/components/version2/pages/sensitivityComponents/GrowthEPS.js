@@ -8,7 +8,7 @@ const GrowthEPS = () => {
     const [endGrowth, setendGrowth] = useState(.06);
     const [interval, setInterval] = useState(.01);
     const [growths, setGrowths] = useState([])
-    const [price, setPrice] = useState(230);
+    const [price, setPrice] = useState(210);
 
 
 
@@ -115,7 +115,7 @@ const GrowthEPS = () => {
                                 $
                                 </TableCell>
                                 {growths.map((price, index) => (
-                                <TableCell key={`acc-${yearIndex}-${index}`} align="center" fullwidth>
+                                <TableCell key={`acc-${yearIndex}-${index}`} align="center" >
                                     {/* Placeholder for IRR calculation */}
                                     {/* Replace with actual IRR calculation */}
                                     {convertDollar(eps[yearIndex][0][index])}

@@ -420,7 +420,6 @@ class DataManager {
             this.input["AVP"][`Year ${i} DIL`] = eps_new[i-1][1]
         }
 
-        //console.log(this.input["AVP"])
     }
 
     calcAcquDebt = () => {
@@ -504,8 +503,6 @@ class DataManager {
             const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"] //no change
             const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
             
-            if(prices[i]===210) console.log(this.rawdata["MDLZ"][18][6])
-
             const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"] + bull_cash + this.input["GEN"]["Minimum Cash Balance"];
             const val2 = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
             const cash_issued = val1 - val2;
@@ -646,7 +643,6 @@ class DataManager {
                 // } else {
                 //     data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
                 //     data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
-                //     if(key==="3") console.log(year, data[18][year])
                 // }
 
                 if(key==="2") {
@@ -658,7 +654,7 @@ class DataManager {
                         data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
                     }
                 } else {
-                    const rate = year === data[0].length-1 ? 1+data[22][year] : 1+data[22][year+1]
+                    const rate = year === data[0].length-1 ? 1+data[22][year] : 1+data[22][year]
                     data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(rate) //other
                 }
 
@@ -1077,11 +1073,6 @@ class DataManager {
                 syn[6][year] = seg[6][year] + seg[10][year] + cost[3][year] + rev[4][year] + dis[3][year] - ncore[4][year]; // SG&A / Corp Exp
                 syn[7][year] = syn[0][year] === 0 ? 0 : syn[6][year]/syn[0][year];
                 syn[8][year] = seg[12][year] + cost[4][year] + rev[5][year] + dis[4][year] - ncore[5][year]; // EBIT
-                // console.log(year, seg[12][year])
-                // console.log(year, cost[12][year])
-                // console.log(year, rev[12][year])
-                // console.log(year, dis[12][year])
-                // console.log(year, seg[12][year])
                 //syn[8][year] = syn[2][year] - syn[4][year] - syn[6][year];
                 syn[9][year] = syn[0][year] === 0 ? 0 : syn[8][year]/syn[0][year];
                 syn[10][year] = seg[18][year] + cost[4][year] + rev[8][year] + dis[4][year] - ncore[9][year]; // EBITDA
@@ -1215,7 +1206,7 @@ class DataManager {
         const mdlz_tax = this.input["GEN"]["MDLZ Tax Rate"];
 
         const mdlz_ni = this.rawdata["MDLZ"][1][year+6];
-        const target_nopat = tnopat ? tnopat : this.getTargetNOPAT(year+1)
+        const target_nopat = tnopat ? tnopat[year] : this.getTargetNOPAT(year+1)
 
         const tpensions = this.rawdata["TARGET"][0][year+6];
         const target_pensions_shield = mdlz_tax * tpensions * -1;
@@ -1461,13 +1452,17 @@ class DataManager {
             for(let year = 1; year < data[0].length; year++) {
                 data[0][year] = data[0][year-1] * (1+rate);
             }
-            years.forEach((year, index) => {
+            let tnopat_years = []
+            years.forEach((year) => {
                 const realYear = year-this.input["GEN"]["Trade Year"];
                 const nopat = data[0][realYear] * data[13][realYear] * (1-data[21][realYear]);
                 const tnopat = this.getTNOPAT(nopat, realYear);
-                const group = this.epsStuff([price], year, tnopat)
-                eps[index][0].push(group[0])
-                eps[index][1].push(group[1])
+                tnopat_years.push(tnopat)
+            })
+            const group = this.getEps([price], 2026, years.length, tnopat_years)
+            years.forEach((year, index) => {
+                eps[index][0].push(group[index][0])
+                eps[index][1].push(group[index][1])
             })
         })
 

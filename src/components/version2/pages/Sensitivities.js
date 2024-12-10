@@ -40,13 +40,13 @@ const Sensitivities = () => {
           <PriceGrowthIRR />
         </Grid>
         <Grid item xs={6} >
-          <PriceEPS />
+          <GrowthEPS />
         </Grid>
       </Grid>
       <Grid container spacing={1} paddingTop={4} >
         {/* InputPage1 and ReturnsAVP split the screen in half */}
         <Grid item xs={6} >
-          {/* <GrowthEPS /> */}
+          <PriceEPS />
         </Grid>
         <Grid item xs={6} >
           <GrowthNPV />
