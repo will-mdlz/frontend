@@ -25,7 +25,7 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
   let dollar_rows = [0,2,8,12,17]
   let bot_bord_rows = [13];
   let cogs = [18,19]
-  let editable = [5,7,11,14,15,20,22]
+  let editable = [4,6,10,14,15,20,22]
 
   const generateColumnLabels = (startingYear, numberOfYears) => {
     const labels = [];
@@ -38,9 +38,9 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
   const total_years = dataManagerInstance.rawdata["SEG"][segKey][0].length;
   const COLUMN_LABELS = generateColumnLabels(dataManagerInstance.input["SA"][segKey]['startingyear'], total_years);
 
-  const firstEdit = (row, col) => {
-    return (col===dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear']) && (row===0||row===18||row===19)
-  }
+  // const firstEdit = (row, col) => {
+  //   return (col===dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear']) && (row===0||row===18||row===19)
+  // }
 
   const isEditing = (segment, yearIndex) => {
     return segment===editmode[0] && yearIndex===editmode[1];
@@ -146,7 +146,7 @@ const SegTemplate = ({segKey, handleDataChanged}) => {
               </TableCell>
               {row.map((cellValue, cellIndex) => {
                 if (cellIndex >= total_years) return null;
-                return (editable.includes(rowIndex) || firstEdit(rowIndex, cellIndex)) && cellIndex >= dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear'] ? 
+                return (editable.includes(rowIndex)) && cellIndex >= dataManagerInstance.input["GEN"]["Trade Year"]-dataManagerInstance.input["SA"][segKey]['startingyear'] ? 
                 <TableCell style={labelStyle} key={cellIndex}>
                       <TextField
                             value={isEditing(rowIndex, cellIndex) ? val : perc_row ? prettify_percent(cellValue) : prettify_dollars(cellValue) + " "}

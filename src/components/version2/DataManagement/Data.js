@@ -109,10 +109,10 @@ class DataManager {
     initInputCost = () => {
         const stored = localStorage.getItem('inputcost');
         if(!stored || this.freshstart) {
-            return {"Runrate": 57, "Phasing": [.333,.666, 1]};
+            return {"Runrate": 56.44, "Phasing": [.333,.666, 1]};
         } else {
             const parsed = JSON.parse(stored);
-            parsed["Runrate"] = 57;
+            parsed["Runrate"] = 56.44;
             parsed["Phasing"] = [.333,.666, 1];
             return parsed;
         }
@@ -435,7 +435,6 @@ class DataManager {
         const bull_tnd = tnd + bull_cash
         const lvg = bull_tnd/sub_core
         const inc_lev = this.input["GEN"]["Max leverage"] - lvg;
-
         return inc_lev * sub_core
     }
 
@@ -496,12 +495,12 @@ class DataManager {
         let l1 = [];
         let l2 = [];
         for(let i = 0; i < prices.length; i++) {
-            const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]); // no change
-            const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"]; //no change
+            const purchase_equity_value = (prices[i]*this.input["GEN"]["FDSO at Offer"]); // @240 off by 10
+            const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"]; // @240 off by 10
             const trans_fees = implied_ev * this.input["GEN"]["Transaction Fees %"]; // no change
-            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"]; //no change
+            const uses = purchase_equity_value + this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"] + this.input["GEN"]["Acquisition Debt"]*this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"]; //@240 off by 10
             const bull_cash = this.rawdata["MDLZ"][18][6] + this.input["GEN"]["Target Current Cash"] - this.input["GEN"]["Minimum Cash Balance"] //no change
-            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"]
+            const equity_issued = uses - this.input["GEN"]["Acquisition Debt"] - (this.input["GEN"]["Target Net Debt"] + this.input["GEN"]["Target Current Cash"]) - this.input["GEN"]["Non-Core Divestiture"] - bull_cash - this.input["GEN"]["Minimum Cash Balance"] // @240 off by 10
             
             const val1 = this.input["GEN"]["Acquisition Debt"] + this.input["GEN"]["Non-Core Divestiture"] + bull_cash + this.input["GEN"]["Minimum Cash Balance"];
             const val2 = this.input["GEN"]["Acquisition Debt"] * this.input["GEN"]["Debt Issurance Fees"] + trans_fees + this.input["GEN"]["Control Fees"] + this.input["GEN"]["KKR"];
@@ -628,23 +627,8 @@ class DataManager {
         const yeardiff = this.input["GEN"]["Trade Year"] - this.input["SA"][key]["startingyear"]
         if(data) {
             for(let year = 0; year < data[0].length; year++) {
-                // data[8][year] = data[2][year] - data[4][year] - data[6][year];
-                // data[12][year] = data[8][year] + parseFloat(data[10][year]);
-                // [3,5,7,9,11,13].forEach((num) => {
-                //     data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
-                // });
-
                 data[0][year] = year===0 ? data[0][year] : data[0][year-1] * (1+(data[14][year] + data[15][year]+data[16][year]));
                 data[1][year] = year===0 ? 0 : (data[0][year] / data[0][year-1]) - 1
-
-                // if(year<=yeardiff) {
-                //     data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
-                //     data[19][year] = data[19][year]
-                // } else {
-                //     data[18][year] = year===0 ? data[18][year] : data[18][year-1]/data[20][year-1]*data[20][year]*(1+data[14][year]) //coca
-                //     data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]) //other
-                // }
-
                 if(key==="2") {
                     if(year<yeardiff-1){
                         data[19][year] = year===0 ? data[19][year] : data[19][year-1]*(1+data[22][year]+data[14][year]) //other
@@ -669,6 +653,9 @@ class DataManager {
                 data[8][year] = data[2][year] - data[4][year] - data[6][year];
                 //data[10][year] = data[11][year] * data[0][year];
                 data[12][year] = data[8][year] + parseFloat(data[10][year]);
+                // [3,9,13].forEach((num) => {
+                //     data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
+                // });
                 [3,5,7,9,11,13].forEach((num) => {
                     data[num][year] = data[0][year] === 0 ? 0 : data[num-1][year]/data[0][year];
                 });
@@ -1210,16 +1197,25 @@ class DataManager {
 
         const tpensions = this.rawdata["TARGET"][0][year+6];
         const target_pensions_shield = mdlz_tax * tpensions * -1;
-        const target_pension_impact = tpensions + target_pensions_shield;
+        const target_pension_impact = tpensions + target_pensions_shield; //good
 
         const tos = this.rawdata["TARGET"][1][year+6]
         const target_other_shield = mdlz_tax * tos * -1;
-        const target_other_impact = tos + target_other_shield;
+        const target_other_impact = tos + target_other_shield; //good
 
         //need input here?
-        const new_definite = -1 * this.input["GEN"]["Annual Intangible Ammortization"]; 
+
+        const purchase_equity_value = (price*this.input["GEN"]["FDSO at Offer"]);
+        const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
+        const amort_years = 15
+        const amort_perc = .1
+        const target_intangible = 78.3
+        const ann_int_ammort = ((implied_ev*amort_perc)/amort_years) - target_intangible;
+
+        //const new_definite = -1 * this.input["GEN"]["Annual Intangible Ammortization"]; 
+        const new_definite = -1 * ann_int_ammort; 
         const new_def_shield = mdlz_tax * new_definite * -1;
-        const new_def_impact = new_definite + new_def_shield;
+        const new_def_impact = new_definite + new_def_shield; 
 
         //need input here?
         const ppe = 1 * this.input["GEN"]["Annual PP&E Stepup"]; 
@@ -1248,7 +1244,16 @@ class DataManager {
         const rev_da = rdata[6][year+1];
 
         //need input here?
-        const new_definite = -1 * this.input['GEN']["Annual Intangible Ammortization"]; ///////////////////////////////
+
+        const purchase_equity_value = (price*this.input["GEN"]["FDSO at Offer"]);
+        const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
+        const amort_years = 15
+        const amort_perc = .1
+        const target_intangible = 78.3
+        const ann_int_ammort = ((implied_ev*amort_perc)/amort_years) - target_intangible;
+
+        //const new_definite = -1 * this.input['GEN']["Annual Intangible Ammortization"]; ///////////////////////////////
+        const new_definite = -1 * ann_int_ammort; ///////////////////////////////
         const new_def_shield = mdlz_tax * new_definite * -1;
         const new_def_impact = new_definite + new_def_shield;
 
@@ -1299,9 +1304,16 @@ class DataManager {
         const be = this.input["GEN"]["Beginning Cash"]
         const min = this.input["GEN"]["Minimum Cash Balance"];
         const financing = this.rawdata["MDLZ"][17][year+6]
-        const yoy = year <= 3 ? (1+this.input["GEN"]["Dividend YoY % (first 3 years)"]) : (1+this.input["GEN"]["Dividend YoY %"])
-        const dps = this.input["GEN"]["Dividends / Share"]*(yoy**(year+1));
+        let dps = this.input["GEN"]["Dividends / Share"]
+        for(let y = 0; y <= year; y++) {
+            const yoy = y < 3 ? (1+this.input["GEN"]["Dividend YoY % (first 3 years)"]) : (1+this.input["GEN"]["Dividend YoY %"])
+            dps *= (yoy)
+        }
         const total_div = this.c1(price) * dps
+
+        if(price===240&&year===4) {
+            console.log(total_div)
+        }
 
         return be-min+financing-total_div;
     }
@@ -1354,6 +1366,7 @@ class DataManager {
                 const c3 = this.c3(prices[i], temp)
                 const c4 = this.c4(prices[i], temp)
                 const paydown = this.paydown(prices[i], temp)
+
                 const c5 = -1*this.input["GEN"]["Interest Rate"]*(debt*2 - c3 - c4 - paydown[1])/2;
                 const pd = -1*paydown[0];
                 const pds = ie_rate * pd * -1;
