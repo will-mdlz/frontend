@@ -367,8 +367,8 @@ class DataManager {
         const storedGen = localStorage.getItem('gen');
         if(!storedGen) {
             return {
-                "Standalone Tax Rate": .24, "MDLZ Tax Rate": .24, "WACC": .08, "PGR": .03,
-                "Annual Intangible Ammortization": 0, "Annual PP&E Stepup": 0, "Debt Issurance Fees": 0, "Transaction Fees %": 0,
+                "Standalone Tax Rate": .24, "MDLZ Tax Rate": .24, "WACC": .08, "PGR": .03, "Annual Intangible Ammortization (years)": 0, "Annual Intangible Ammortization (% of PP)": 0,
+                "Current Target Annual Intangible Ammortization": 0, "Annual PP&E Stepup": 0, "Debt Issurance Fees": 0, "Transaction Fees %": 0,
                 "Control Fees": 0, "CAPEX % of NR": 0, "Minimum Cash Balance": 0, "Trade Year": 0, "Dividend YoY % (first 3 years)": 0,
                 "Dividend YoY %": 0, "Interest Tax Rate": 0, "% Interest Deductible": 0, "Interest Income Rate": 0, "Max leverage": 0,
                 "Synergy Credit for Leverage": 0, "Dividends / Share": 0, "% ∆ in NWC as % ∆ in Revenue": 0, "OTC": 0, "Year 1 OTC": 0,
@@ -1207,9 +1207,9 @@ class DataManager {
 
         const purchase_equity_value = (price*this.input["GEN"]["FDSO at Offer"]);
         const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
-        const amort_years = 15
-        const amort_perc = .1
-        const target_intangible = 78.3
+        const amort_years = this.input['GEN']["Annual Intangible Ammortization (years)"]
+        const amort_perc = this.input['GEN']["Annual Intangible Ammortization (% of PP)"]
+        const target_intangible = this.input['GEN']["Current Target Annual Intangible Ammortization"]
         const ann_int_ammort = ((implied_ev*amort_perc)/amort_years) - target_intangible;
 
         //const new_definite = -1 * this.input["GEN"]["Annual Intangible Ammortization"]; 
@@ -1247,9 +1247,9 @@ class DataManager {
 
         const purchase_equity_value = (price*this.input["GEN"]["FDSO at Offer"]);
         const implied_ev = purchase_equity_value + this.input["GEN"]["Target Net Debt"];
-        const amort_years = 15
-        const amort_perc = .1
-        const target_intangible = 78.3
+        const amort_years = this.input['GEN']["Annual Intangible Ammortization (years)"]
+        const amort_perc = this.input['GEN']["Annual Intangible Ammortization (% of PP)"]
+        const target_intangible = this.input['GEN']["Current Target Annual Intangible Ammortization"]
         const ann_int_ammort = ((implied_ev*amort_perc)/amort_years) - target_intangible;
 
         //const new_definite = -1 * this.input['GEN']["Annual Intangible Ammortization"]; ///////////////////////////////
@@ -1311,9 +1311,9 @@ class DataManager {
         }
         const total_div = this.c1(price) * dps
 
-        if(price===240&&year===4) {
-            console.log(total_div)
-        }
+        // if(price===240&&year===4) {
+        //     console.log(total_div)
+        // }
 
         return be-min+financing-total_div;
     }
@@ -1644,46 +1644,48 @@ class DataManager {
         genData["Interest Income Rate"] = data[4][1]
         genData["WACC"] = data[5][1]
         genData["PGR"] = data[6][1]
-        genData["Annual Intangible Ammortization"] = data[7][1]
-        genData["Annual PP&E Stepup"] = data[8][1]
-        genData["Debt Issurance Fees"] = data[9][1]
-        genData["Transaction Fees %"] = data[10][1]
-        genData["Control Fees"] = data[11][1]
-        genData["CAPEX % of NR"] = data[12][1]
-        genData["Minimum Cash Balance"] = data[13][1]
-        genData["Trade Year"] = this.convertDate(data[14][1])
-        genData["Dividend YoY % (first 3 years)"] = data[15][1]
-        genData["Dividend YoY %"] = data[16][1]
-        genData["Interest Tax Rate"] = data[17][1]
-        genData["% Interest Deductible"] = data[18][1]
-        genData["Interest Rate"] = data[19][1]
-        genData["Max leverage"] = data[20][1]
-        genData["Synergy Credit for Leverage"] = data[21][1]
-        genData["Dividends / Share"] = data[22][1]
-        genData["% ∆ in NWC as % ∆ in Revenue"] = data[23][1]
-        genData["OTC"] = data[27][1]
-        genData["Year 1 OTC"] = data[28][1]
-        genData["Year 2 OTC"] = data[29][1]
-        genData["KKR"] = data[30][1]
-        genData["Non-Core Divestiture"] = data[31][1]
-        genData["Target Share Price"] = data[35][1]
-        genData["52-Week High"] = data[36][1]
-        genData["SO"] = data[37][1]
-        genData["FDSO at Offer"] = data[38][1]
-        genData["Target Net Debt"] = data[39][1]
-        genData["Trust % Ownership"] = data[40][1]
-        genData["BV Equity"] = data[41][1]
-        genData["Target Current Cash"] = data[42][1]
-        genData["Target Short Term Debt"] = data[43][1]
-        genData["MDLZ Share Price"] = data[47][1]
-        genData["MDLZ 2025 FDSO"] = data[48][1]
-        genData["Current FDSO"] = data[49][1]
-        genData["2025 MDLZ Debt"] = data[50][1]
-        genData["Total FDSO"] = data[54][1]
-        genData["% Cash"] = data[55][1]
-        genData["% Equity"] = data[56][1]
-        genData["Beginning Cash"] = data[57][1]
-        genData["Ending Cash"] = data[58][1]
+        genData["Annual Intangible Ammortization (years)"] = data[7][1]
+        genData["Annual Intangible Ammortization (% of PP)"] = data[8][1]
+        genData["Current Target Annual Intangible Ammortization"] = data[9][1]
+        genData["Annual PP&E Stepup"] = data[10][1]
+        genData["Debt Issurance Fees"] = data[11][1]
+        genData["Transaction Fees %"] = data[12][1]
+        genData["Control Fees"] = data[13][1]
+        genData["CAPEX % of NR"] = data[14][1]
+        genData["Minimum Cash Balance"] = data[15][1]
+        genData["Trade Year"] = this.convertDate(data[16][1])
+        genData["Dividend YoY % (first 3 years)"] = data[17][1]
+        genData["Dividend YoY %"] = data[18][1]
+        genData["Interest Tax Rate"] = data[19][1]
+        genData["% Interest Deductible"] = data[20][1]
+        genData["Interest Rate"] = data[21][1]
+        genData["Max leverage"] = data[22][1]
+        genData["Synergy Credit for Leverage"] = data[23][1]
+        genData["Dividends / Share"] = data[24][1]
+        genData["% ∆ in NWC as % ∆ in Revenue"] = data[25][1]
+        genData["OTC"] = data[29][1]
+        genData["Year 1 OTC"] = data[30][1]
+        genData["Year 2 OTC"] = data[31][1]
+        genData["KKR"] = data[32][1]
+        genData["Non-Core Divestiture"] = data[33][1]
+        genData["Target Share Price"] = data[37][1]
+        genData["52-Week High"] = data[38][1]
+        genData["SO"] = data[39][1]
+        genData["FDSO at Offer"] = data[40][1]
+        genData["Target Net Debt"] = data[41][1]
+        genData["Trust % Ownership"] = data[42][1]
+        genData["BV Equity"] = data[43][1]
+        genData["Target Current Cash"] = data[44][1]
+        genData["Target Short Term Debt"] = data[45][1]
+        genData["MDLZ Share Price"] = data[49][1]
+        genData["MDLZ 2025 FDSO"] = data[50][1]
+        genData["Current FDSO"] = data[51][1]
+        genData["2025 MDLZ Debt"] = data[52][1]
+        genData["Total FDSO"] = data[56][1]
+        genData["% Cash"] = data[57][1]
+        genData["% Equity"] = data[58][1]
+        genData["Beginning Cash"] = data[59][1]
+        genData["Ending Cash"] = data[60][1]
 
         this.input["GEN"] = genData
         localStorage.setItem('gen', JSON.stringify(genData));

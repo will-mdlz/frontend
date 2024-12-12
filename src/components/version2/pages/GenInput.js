@@ -13,8 +13,8 @@ const GenInput = () => {
   const [val, setVal] = useState('')
   const [editmode, setEditMode] = useState([])
 
-  const percents = [1,2,3,4,5,8,9,11,14,15,16,17,18,20,22,33,42,43]
-  const dollars = [0,6,7,10,12,21,23,24,25,26,27,28,29,30,31,32,34,35,36,37,40,44,45,46]
+  const percents = [1,2,3,4,5,7,10,11,13,16,17,18,19,20,22,24,35,44,45]
+  const dollars = [0,8,9,12,14,23,25,26,27,28,29,30,31,34,36,37,38,39,42,46,47,48]
 
 
   const handleFileUpload = (event) => {

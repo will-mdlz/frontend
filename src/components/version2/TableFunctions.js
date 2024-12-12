@@ -98,6 +98,7 @@ export const prettify_gen = (input) => {
   }
   return Math.abs(input) - 1e-5 < 0
     ? "-"
+    : Math.abs(input) < 10 ? ( input > 0 ? `${(input * 1).toFixed(1)}` : `(${(input * -1).toFixed(1)})`)
     : input > 0
     ? `${(input * 1).toFixed(0)}`
     : `(${(input * -1).toFixed(0)})`;
